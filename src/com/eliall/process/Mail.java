@@ -34,11 +34,10 @@ public class Mail {
 		if (server.length() < 5) throw new Exception("Invalid mail server: " + server);
 		if (port == null || port.length() <= 1) port = "25";
 
-		props.put("mail.smtp.host", server); props.put("mail.smtp.port", port);
-        props.put("mail.smtp.starttls.required", "true");
-        props.put("mail.smtp.starttls.enabled", "true");
-        props.put("mail.transport.protocol", "smtp");
-        
+		props.put("mail.smtp.host", server); props.put("mail.smtp.port", port); props.put("mail.transport.protocol", "smtp");
+		props.put("mail.smtp.starttls.required", "true"); props.put("mail.smtp.starttls.enabled", "true");
+		props.put("mail.smtp.ssl.trust", "*"); props.put("mail.imaps.ssl.trust", "*"); 
+
         if (user != null && password != null) props.put("mail.smtp.auth", "true");
 		
 		session = Session.getInstance(props, Boolean.parseBoolean((String)props.get("mail.smtp.auth")) ? new Authenticator() {
