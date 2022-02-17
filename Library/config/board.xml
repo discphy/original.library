@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="board">
+	<select id="board-article-count" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM board_article 
+		
+		<if test='category_name != null'> WHERE category_name = #{category_name} </if>
+		<if test='user_no != null'> AND user_no = #{user_no} </if>
+		<if test='dateOption == "registerDate"'> AND DATE_FORMAT(#{startDate}, "%Y-%m-%d 00:00:00") &lt;= created_date and DATE_FORMAT(#{endDate}, "%Y-%m-%d 23:59:59") &gt;= created_date </if>
+		<if test='words != null'> AND MATCH(user_name, title_subject, body_content, extra_content) AGAINST ('${words}' IN BOOLEAN MODE) </if>
+	</select>
+
+	<select id="board-article-list" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT *, UNIX_TIMESTAMP(created_date) as epoch_created_date
+			,(SELECT COUNT(*) FROM board_comment WHERE board_no = a.seq_no) board_replies
+			,(SELECT body_content FROM board_comment WHERE board_no = a.seq_no) reply_body_content 
+		FROM board_article a
+		<if test='category_name != null'> WHERE category_name = #{category_name} </if>
+		<if test='user_no != null'> AND user_no = #{user_no} </if>
+		<if test='dateOption == "registerDate"'> AND DATE_FORMAT(#{startDate}, "%Y-%m-%d 00:00:00") &lt;= created_date and DATE_FORMAT(#{endDate}, "%Y-%m-%d 23:59:59") &gt;= created_date </if>
+		<if test='words != null'> AND MATCH(user_name, title_subject, body_content, extra_content) AGAINST ('${words}' IN BOOLEAN MODE) </if>
+		ORDER BY <if test='sortType != null'> ${sortType} </if><if test='sortType == null'> created_date DESC, depth_no </if> <if test='start != null'> LIMIT ${start}, ${end} </if>
+	</select>
+	
+	<select id="board-article-row-select" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT * FROM board_article WHERE seq_no = #{seq_no}
+	</select>
+	
+	<select id="board-extra_content-number" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT IFNULL(MAX(extra_content)+1, 0) extra_content FROM board_article WHERE category_name = #{category_name}
+	</select>
+	
+	<select id="board-article-detail" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT *, 
+		DATE_FORMAT(created_date, "%Y-%m-%d") as string_created_date, 
+		UNIX_TIMESTAMP(created_date) as epoch_created_date, 
+		UNIX_TIMESTAMP(updated_date) as epoch_updated_date, 
+		UNIX_TIMESTAMP(replied_date) as epoch_replied_date,
+		(SELECT COUNT(*) FROM board_comment WHERE board_no = a.seq_no) board_replies,
+		(SELECT body_content FROM board_comment WHERE board_no = a.seq_no) reply_body_content ,
+		(SELECT COUNT(*) FROM main_display WHERE seq_no = a.seq_no) as is_main
+		FROM board_article a WHERE seq_no = #{seq_no}
+	</select>
+	
+	<insert id="board-article-insert" parameterType="java.util.Map">
+		INSERT INTO board_article (seq_no, user_no, user_name, category_name, bunch_no, parent_no, depth_no, title_subject, body_content, extra_content, owner_password)
+		VALUES (#{seq_no}, #{user_no}, #{user_name}, #{category_name}, #{bunch_no}, #{parent_no}, ${depth_no}, #{title_subject}, #{body_content}, #{extra_content}, #{owner_password})
+	</insert>
+	
+	<update id="board-article-update" parameterType="java.util.Map">
+		UPDATE board_article SET updated_date = current_timestamp
+			<if test="category_name != null"> ,category_name = #{category_name} </if>
+			<if test="user_name != null"> ,user_name = #{user_name} </if>
+			<if test="title_subject != null"> ,title_subject = #{title_subject} </if>
+			<if test="body_content != null"> ,body_content = #{body_content} </if>
+			<if test="extra_content != null"> ,extra_content = #{extra_content} </if>
+		WHERE seq_no = #{seq_no}
+	</update>
+	
+	<delete id="board-article-delete" parameterType="java.util.Map">
+		DELETE FROM board_article WHERE seq_no = #{seq_no}
+	</delete>
+	
+	<select id="board-comment-count" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM board_comment WHERE board_no = #{board_no}
+	</select>
+	
+	<select id="board-comment-select" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT *, UNIX_TIMESTAMP(created_date) as epoch_created_date FROM board_comment WHERE board_no = #{board_no} ORDER BY bunch_no, depth_no
+	</select>
+	
+	<select id="board-comment-row-select" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT * FROM board_comment WHERE seq_no = #{seq_no}
+	</select>
+	
+	<insert id="board-comment-insert" parameterType="java.util.Map">
+		INSERT INTO board_comment (seq_no, board_no, user_no, user_name, bunch_no, parent_no, depth_no, body_content, owner_password)
+		VALUES (#{seq_no}, #{board_no}, #{user_no}, #{user_name}, #{bunch_no}, #{parent_no}, ${depth_no}, #{body_content}, #{owner_password})
+	</insert>
+	
+	<update id="board-comment-update" parameterType="java.util.Map">
+		UPDATE board_comment SET <if test="user_name != null"> user_name = #{user_name}, </if> body_content = #{body_content}, updated_date = CURRENT_TIMESTAMP WHERE seq_no = #{seq_no}
+	</update>
+	
+	<select id="board-comment-delete-list" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT seq_no FROM board_comment WHERE board_no = #{seq_no} 
+	</select>
+	
+	<delete id="board-comment-delete" parameterType="java.util.Map">
+		DELETE FROM board_comment WHERE seq_no = #{seq_no}
+	</delete>
+</mapper>
+
+<!--
+CREATE TABLE `board_article` (
+  `seq_no` char(24) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_no` varchar(11) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `category_name` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bunch_no` char(24) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `parent_no` char(24) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `depth_no` mediumint(9) DEFAULT NULL,
+  `title_subject` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `body_content` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `extra_content` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `owner_password` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_date` datetime DEFAULT current_timestamp(),
+  `updated_date` datetime DEFAULT NULL,
+  `replied_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`seq_no`)
+)
+
+CREATE TABLE `board_comment` (
+  `seq_no` char(24) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `board_no` char(24) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_no` varchar(11) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `user_name` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bunch_no` char(24) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `parent_no` char(24) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `depth_no` mediumint(9) DEFAULT NULL,
+  `body_content` mediumtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `owner_password` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_date` datetime DEFAULT current_timestamp(),
+  `updated_date` datetime DEFAULT NULL,
+  `replied_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`seq_no`)
+)
+-->

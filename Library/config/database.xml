@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<!-- environments default="write">
+		<environment id="read">
+			<transactionManager type="JDBC"/>
+			<dataSource type="JNDI">
+				<property name="data_source" value="java:/comp/env/read_db"/>
+			</dataSource>
+		</environment>
+	</environments-->
+	<environments default="sqlite">
+		<environment id="sqlite">
+			<transactionManager type="JDBC"/>
+			<dataSource type="com.eliall.plugin.SQLite">
+				<property name="driver" value="org.sqlite.JDBC"  />
+				<property name="url" value="jdbc:sqlite:${database.path}/sqlite.db"/>
+			</dataSource>
+		</environment>
+	</environments>
+	<mappers>
+		<mapper url="file://${database.path}/board.xml"/>
+	</mappers>
+</configuration>

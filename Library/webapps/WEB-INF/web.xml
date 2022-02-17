@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" id="WebApp_ID" version="3.0">
+	<display-name>Elibrary Web Service</display-name>
+
+	<filter>
+		<filter-name>HeaderFilter</filter-name>
+		<filter-class>com.eliall.filter.HeaderFilter</filter-class>
+		<init-param><param-name>My-Custom-Header</param-name><param-value>0000-0000-0000-0000</param-value></init-param>
+	</filter>
+	<filter>
+		<filter-name>RewriteFilter</filter-name>
+		<filter-class>com.eliall.filter.RewriteFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>HeaderFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+  	<filter-mapping>
+		<filter-name>RewriteFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>Start</servlet-name>
+		<servlet-class>com.eliall.servlet.StartServlet</servlet-class>
+		<init-param><param-name>URI-Extension</param-name><param-value>all</param-value></init-param>
+		<!-- init-param><param-name>Character-Set</param-name><param-value>EUC-KR</param-value></init-param -->
+		<!-- init-param><param-name>Default-Config</param-name><param-value>com.eliall.Conf</param-value></init-param -->
+		<init-param><param-name>Controller-Package</param-name><param-value>com.eliall.controller</param-value></init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>Gate</servlet-name>
+		<servlet-class>com.eliall.servlet.GateServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Gate</servlet-name>
+		<url-pattern>*.all</url-pattern>
+	</servlet-mapping>
+	
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>
