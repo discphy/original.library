@@ -19,7 +19,7 @@ public class RewriteFilter implements Filter {
 
 	public void init(FilterConfig config) throws ServletException {
 		if ((extensions = config.getInitParameter("Accept-Extension")) == null) extensions = "do";
-		else { extensions = extensions.indexOf("do") >= 0 ? extensions : extensions + "|do"; extensions = extensions.replaceAll("[ ,\t]+", "|"); }
+		else extensions = extensions.replaceAll("[ ,\t]+", "|");
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
