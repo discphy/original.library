@@ -11,15 +11,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,8 +37,6 @@ import java.util.regex.Pattern;
 import com.eliall.common.Config;
 
 import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.Sink;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class Tool {
@@ -563,24 +558,13 @@ public class Tool {
 		if (object == null) return;
 
 		try {
-			if (object instanceof Map) ((Map)object).clear();
-			if (object instanceof ByteBuffer) ((ByteBuffer)object).clear();
+			if (object instanceof Closeable) { ((Closeable)object).close(); return; }
 
-			if (object instanceof Reader) ((Reader)object).close();
-			if (object instanceof Writer) ((Writer)object).close();
+			if (object instanceof Map) { ((Map)object).clear(); return; }
+			if (object instanceof ByteBuffer) { ((ByteBuffer)object).clear(); return; }
 
-			if (object instanceof Channel) ((Channel)object).close();
-			if (object instanceof Closeable) ((Closeable)object).close();
-
-			if (object instanceof InputStream) ((InputStream)object).close();
-			if (object instanceof OutputStream) ((OutputStream)object).close();
-
-			if (object instanceof Sink) ((Sink)object).close();
-			if (object instanceof Response) ((Response)object).close();
-			if (object instanceof ResponseBody) ((ResponseBody)object).close();
-
-			if (object instanceof Process) ((Process)object).destroy();
-			if (object instanceof HttpURLConnection) ((HttpURLConnection)object).disconnect();
+			if (object instanceof Process) { ((Process)object).destroy(); return; }
+			if (object instanceof HttpURLConnection) { ((HttpURLConnection)object).disconnect(); return; }
 		} catch (Exception e) {}
 	}
 
