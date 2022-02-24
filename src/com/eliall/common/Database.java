@@ -18,9 +18,10 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
+import com.eliall.definition.DB;
 import com.eliall.util.Tool;
 
-public class Database {
+public class Database implements DB {
 	protected static final HashMap<String, SqlSessionFactory> factories = new HashMap<String, SqlSessionFactory>();
 	protected static final String defaults = "default";
 
@@ -46,20 +47,24 @@ public class Database {
 		} catch (Throwable e) { e.printStackTrace(System.err); }
 	}
 	
-	public static SqlSession session() {
-		return factories.get(defaults).openSession(false);
+	public static SqlSession main() {
+		return session(MAIN);
 	}
 	
-	public static SqlSession session(boolean writable) {
-		return factories.get(writable ? "write" : "read").openSession(false);
+	public static SqlSession slave() {
+		return session(SLAVE);
 	}
 	
+	public static SqlSession extra() {
+		return session(EXTRA);
+	}
+
 	public static SqlSession session(String id) {
 		return factories.get(id).openSession(false);
 	}
-
-	public static SqlSession session(String id, boolean writable) {
-		return factories.get(id + (writable ? "_write" : "_read")).openSession(false);
+	
+	public static SqlSession session(boolean writable) {
+		return factories.get(writable ? WRITER : READER).openSession(false);
 	}
 
 	public static void commit(Object object) {
