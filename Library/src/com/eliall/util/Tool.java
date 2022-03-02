@@ -140,14 +140,11 @@ public class Tool {
 		String returnString = "";
 
 		for (int a=0 ; a<strSet.length ; a++) {
-			if (!nvl(strSet[a]).equals("")) returnString += strSet[a] + needle;
+			if (nvl(strSet[a]).equals("")) continue;
+			else returnString += strSet[a] + "\t\t";
 		}
 
-		if (!returnString.equals("") && returnString.length() >= needle.length()) {
-			returnString = returnString.substring(0, returnString.length() - needle.length());
-		}
-
-		return returnString;
+		return returnString.trim().replaceAll("\t\t", needle);
 	}
 
 	public static String join(String[] strSet) {
