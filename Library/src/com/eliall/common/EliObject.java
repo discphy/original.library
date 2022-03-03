@@ -230,13 +230,13 @@ public class EliObject extends HashMap<String, Object> {
 
 		return object.toString();
 	}
-	
-	public String getStrings(String ... keys) {
+
+	public String getStrings(String needle, String ... keys) {
 		StringBuffer strings = new StringBuffer();
 		
-		for (String key : keys) strings.append(getString(key, ""));
+		for (String key : keys) strings.append(getString(key, "")).append(needle);
 
-		return strings.toString();
+		return strings.toString().substring(0, strings.length() - needle.length());
 	}
 	
 	public Date getDate(String field, final Date def) {
