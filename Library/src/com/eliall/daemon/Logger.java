@@ -77,18 +77,15 @@ public class Logger extends Daemon {
 
 	public static void log(String message, String path) throws Exception { log(message, path, null); }
 	public static void log(String message, String path, TimeUnit unit) throws Exception {
-		if (!EXECUTED) return;
-
-		if (path == null) throw new Exception("Path is not specified");
+		if (!EXECUTED) throw new Exception("Logger not running");
+		else if (path == null) throw new Exception("Path is not specified");
 		else logs.offer(new Log(null, message, path, unit));
 	}
 	
 	public static void debug(String message) { debug(message, null, null); }
 	public static void debug(String message, String path) { debug(message, path, null); }
 	public static void debug(String message, String path, TimeUnit unit) {
-		if (!EXECUTED) return;
-
-		if ((path = (path != null ? path : DEBUG)) == null) return;
+		if (!EXECUTED || (path = (path != null ? path : DEBUG)) == null) return;
 		else logs.offer(new Log(Level.DEBUG, message, path, unit));
 		
 		if (STDOUT) System.out.println(message);
@@ -97,9 +94,7 @@ public class Logger extends Daemon {
 	public static void info(String message) { info(message, null, null); }
 	public static void info(String message, String path) { info(message, path, null); }
 	public static void info(String message, String path, TimeUnit unit) {
-		if (!EXECUTED) return;
-		
-		if ((path = (path != null ? path : INFO)) == null) return;
+		if (!EXECUTED || (path = (path != null ? path : INFO)) == null) return;
 		else logs.offer(new Log(Level.INFO, message, path, unit));
 		
 		if (STDOUT) System.out.println(message);
@@ -109,9 +104,7 @@ public class Logger extends Daemon {
 	public static void warn(String message, Throwable error) { warn(message, error, null, null); }
 	public static void warn(String message, Throwable error, String path) { warn(message, error, path, null); }
 	public static void warn(String message, Throwable error, String path, TimeUnit unit) {
-		if (!EXECUTED) return;
-
-		if ((path = (path != null ? path : WARN)) == null) return;
+		if (!EXECUTED || (path = (path != null ? path : WARN)) == null) return;
 		else logs.offer(new Log(Level.WARN, message + (error != null ? "\t" + error.getMessage() : ""), path, unit));
 		
 		if (STDOUT) { System.out.println(message); if (error != null) System.out.println(error.toString()); }
@@ -120,9 +113,7 @@ public class Logger extends Daemon {
 	public static void error(String message, Throwable error) { error(message, error, null, null); }
 	public static void error(String message, Throwable error, String path) { error(message, error, path, null); }
 	public static void error(String message, Throwable error, String path, TimeUnit unit) {
-		if (!EXECUTED) return;
-
-		if ((path = (path != null ? path : ERROR)) == null) return;
+		if (!EXECUTED || (path = (path != null ? path : ERROR)) == null) return;
 		else logs.offer(new Log(Level.ERROR, message + (error != null ? "\t" + error.getMessage() : ""), path, unit));
 		
 		if (STDOUT) { System.err.println(message); if (error != null) System.err.println(error.toString()); }
