@@ -13,6 +13,7 @@ import org.apache.ibatis.session.SqlSession;
 import com.eliall.common.Config;
 import com.eliall.common.Database;
 import com.eliall.common.EliObject;
+import com.eliall.daemon.Logger;
 import com.eliall.definition.Cache;
 import com.eliall.definition.View;
 import com.eliall.util.HTTP;
@@ -27,12 +28,12 @@ public class BaseController {
 	protected static final Callback HTTP_CALLBACK = new HttpCallback();
 	protected static final Pattern REDIRECT_PATTERN = Pattern.compile("\\[([a-z]+)\\]((https?://[^/]+)?/.*)", Pattern.CASE_INSENSITIVE);
 	protected static final String HTML_TYPE = "text/html", PLAIN_TYPE = "text/plain", JSON_TYPE = "application/json";
-	
+
 	@View(uri = "/pc.jsp", mobile = "/mobile.jsp", method = "method")
 	public void test(HttpServletRequest request, HttpServletResponse response, EliObject parameters) {
 		json(request, response, parameters);
 	}
-	
+
 	public void ajax(HttpServletRequest request, HttpServletResponse response, EliObject parameters) {
 		json(request, response, parameters.set("ajax_received", true).set("origin-headers", request.getHeader("Origin-Headers")));
 	}
@@ -40,7 +41,7 @@ public class BaseController {
 	protected HttpServletRequest request(HttpServletRequest request, String key, Object value) {
 		if (key != null && value != null) request.setAttribute(key, value); return request;
 	}
-	
+
 	protected HttpServletResponse response(HttpServletRequest request, HttpServletResponse response, Object object) {
 		EliObject parameters = object instanceof EliObject ? (EliObject)object : new EliObject(object);
 
@@ -85,9 +86,9 @@ public class BaseController {
 		
 		return response;
 	}
-	
+
 	protected String address(HttpServletRequest request) { return HTTP.address(request); }
-	
+
 	protected EliObject agent(HttpServletRequest request) {
 		EliObject info = new EliObject();
 		String agent = Tool.nvl(request.getHeader(Config.APP_AGENT_KEY), " /" + HTTP.cookie(request, Config.APP_AGENT_KEY.toLowerCase().replaceAll("-", "_"))), strings[] = null;
@@ -119,14 +120,21 @@ public class BaseController {
 		response.setHeader("Pragma", "no-cache"); response.setDateHeader("Expires", 0);
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 	}
-	
-	protected void error(HttpServletResponse response, int code, String message) {
-		if (code >= 300) {
-			try { 
-				if (message == null) response.sendError(code);
-				else { response.setHeader("Status-Text", message); response.sendError(code, message); }
-			} catch (Throwable e) { }
-		}
+
+	protected void error(HttpServletResponse response, int code, Object object) {
+		if (code >= 300) try { 
+			if (object != null) {
+				String message = object.toString();
+				Throwable error = null;
+				
+				if (object instanceof Throwable) message = (error = (Throwable)object).getMessage(); 
+				
+				response.setHeader("Status-Text", message);
+				response.sendError(code, message);
+				
+				Logger.error(message, error);
+			} else response.sendError(code);
+		} catch (Throwable e) { }
 	}
 
 	protected void error(HttpServletRequest request, HttpServletResponse response, int code, String message, Object object) {
@@ -162,14 +170,10 @@ public class BaseController {
 	}
 
 	protected void error(String clazz, String method, String message, Throwable error, SqlSession session) {
-		if (error != null) {
-			System.err.print("[" + clazz + (method != null ? "." + method + "()" : "") + "] " + (message != null ? message : error.getMessage()));
-			error.printStackTrace(System.err);
-		} else System.err.println("[" + clazz + (method != null ? "." + method + "()" : "") + "] " + message);
-		
-		try { Database.rollback(session); } catch (Throwable e) { }
+		Logger.error("[" + clazz + (method != null ? "." + method + "()" : "") + "] " + message, error);
+		Database.rollback(session);
 	}
-	
+
 	protected static class HttpCallback implements Callback {
 		public void onResponse(Call call, Response respoonse) throws IOException { Tool.release(respoonse); }
 		public void onFailure(Call call, IOException exception) { }

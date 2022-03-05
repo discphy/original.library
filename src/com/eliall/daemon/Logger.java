@@ -17,7 +17,7 @@ import com.eliall.util.Tool;
 
 public class Logger extends Daemon {
 	public static String DEBUG = null, INFO = null, WARN = null, ERROR = null; 
-	public static boolean STDOUT = false;
+	public static boolean EXECUTED = false, STDOUT = false;
 
 	protected static final ConcurrentLinkedQueue<Log> logs = new ConcurrentLinkedQueue<Log>();
 	protected static final HashMap<TimeUnit, SimpleDateFormat> formats = new HashMap<TimeUnit, SimpleDateFormat>();
@@ -46,6 +46,9 @@ public class Logger extends Daemon {
 	public void process() {
 		Log log = null; while ((log = logs.poll()) != null) write(log);
 	}
+	
+	@Override
+	protected void prepare() { EXECUTED = true; }
 
 	private void write(Log log) {
 		ByteBuffer fileBuffer = null;
@@ -74,6 +77,8 @@ public class Logger extends Daemon {
 
 	public static void log(String message, String path) throws Exception { log(message, path, null); }
 	public static void log(String message, String path, TimeUnit unit) throws Exception {
+		if (!EXECUTED) return;
+
 		if (path == null) throw new Exception("Path is not specified");
 		else logs.offer(new Log(null, message, path, unit));
 	}
@@ -81,6 +86,8 @@ public class Logger extends Daemon {
 	public static void debug(String message) { debug(message, null, null); }
 	public static void debug(String message, String path) { debug(message, path, null); }
 	public static void debug(String message, String path, TimeUnit unit) {
+		if (!EXECUTED) return;
+
 		if ((path = (path != null ? path : DEBUG)) == null) return;
 		else logs.offer(new Log(Level.DEBUG, message, path, unit));
 		
@@ -90,6 +97,8 @@ public class Logger extends Daemon {
 	public static void info(String message) { info(message, null, null); }
 	public static void info(String message, String path) { info(message, path, null); }
 	public static void info(String message, String path, TimeUnit unit) {
+		if (!EXECUTED) return;
+		
 		if ((path = (path != null ? path : INFO)) == null) return;
 		else logs.offer(new Log(Level.INFO, message, path, unit));
 		
@@ -100,6 +109,8 @@ public class Logger extends Daemon {
 	public static void warn(String message, Throwable error) { warn(message, error, null, null); }
 	public static void warn(String message, Throwable error, String path) { warn(message, error, path, null); }
 	public static void warn(String message, Throwable error, String path, TimeUnit unit) {
+		if (!EXECUTED) return;
+
 		if ((path = (path != null ? path : WARN)) == null) return;
 		else logs.offer(new Log(Level.WARN, message + (error != null ? "\t" + error.getMessage() : ""), path, unit));
 		
@@ -109,6 +120,8 @@ public class Logger extends Daemon {
 	public static void error(String message, Throwable error) { error(message, error, null, null); }
 	public static void error(String message, Throwable error, String path) { error(message, error, path, null); }
 	public static void error(String message, Throwable error, String path, TimeUnit unit) {
+		if (!EXECUTED) return;
+
 		if ((path = (path != null ? path : ERROR)) == null) return;
 		else logs.offer(new Log(Level.ERROR, message + (error != null ? "\t" + error.getMessage() : ""), path, unit));
 		
