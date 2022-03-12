@@ -120,8 +120,12 @@ public class BaseController {
 		response.setHeader("Pragma", "no-cache"); response.setDateHeader("Expires", 0);
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 	}
-
+	
 	protected void error(HttpServletResponse response, int code, Object object) {
+		error(response, code, object, null);
+	}
+
+	protected void error(HttpServletResponse response, int code, Object object, SqlSession session) {
 		if (code >= 300) try { 
 			if (object != null) {
 				String message = object.toString();
@@ -134,7 +138,7 @@ public class BaseController {
 				
 				Logger.error(message, error);
 			} else response.sendError(code);
-		} catch (Throwable e) { }
+		} catch (Throwable e) { } finally { if (session != null) Database.rollback(session); }
 	}
 
 	protected void error(HttpServletRequest request, HttpServletResponse response, int code, String message, Object object) {
