@@ -99,6 +99,7 @@ public class Config {
 	
 	public static String storagePath() { return storagePath(true, ""); }
 	public static String storagePath(boolean daten) { return storagePath(daten, ""); }
+	public static String storagePath(String ... prefix) { return storagePath(true, prefix); }
 	public static String storagePath(boolean daten, String ... prefix) {
 		return Tool.cleanPath(storagePath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + (daten ? File.separator + datenPath() : ""));
 	}
