@@ -6,14 +6,11 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.sql.Clob;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
@@ -85,17 +82,7 @@ public class Database implements DB {
 		} catch (Throwable e) { }
 	}
 	
-	public static void release(Object object) {
-		if (object == null) return;
-		
-		try {
-			if (object instanceof Cursor) ((Cursor<?>)object).close();
-			if (object instanceof Statement) ((Statement)object).close();
-			if (object instanceof ResultSet) ((ResultSet)object).close();
-			if (object instanceof Connection) ((Connection)object).close();
-			if (object instanceof SqlSession) ((SqlSession)object).close();
-		} catch (Throwable e) { }
-	}
+	public static void release(Object ... objects) { Tool.release(objects); }
 	
 	public static void lock(String name) {
 		lock(name, true);
@@ -144,7 +131,7 @@ public class Database implements DB {
 		EliObject parameters = new EliObject();
 		
 		parameters.put("lock_name", Tool.substring(Tool.nvl(name), 50));
-		parameters.put("agent_info", Tool.getNetworkAddress());
+		parameters.put("agent_info", Tool.networkAddress());
 			
 		try {
 			if (lock) session.insert("lock-insert", parameters);
