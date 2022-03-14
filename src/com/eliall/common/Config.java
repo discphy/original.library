@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,7 +26,7 @@ public class Config {
 	public final static String SITE_CODE_KEY = "Site-Code", USER_TOKEN_KEY = "User-Token", USER_IP_KEY = "User-IP";
 	public final static int MAX_THREADS = Runtime.getRuntime().availableProcessors();
 
-	protected static final String serverName = Tool.getHostName() + "/" + Tool.getNetworkAddress();
+	protected static final String serverName = Tool.hostName() + "/" + Tool.networkAddress();
 	protected static final Pattern varKeyPettern = Pattern.compile(".*\\$\\{([^${}]+)\\}.*");
 	protected static final HashMap<String, String> config = new HashMap<String, String>();
 	protected static final Properties properties = new Properties();
@@ -33,7 +34,7 @@ public class Config {
 	public static String SEC_KEY = new String(new char[] { 101,108,102,105,110,49,48 }), SEC_PASS = new String(new char[] { 101,108,105,97,108,108 });
 	public static String CHARSET = "UTF-8", EXTENSION = "do";
 	
-	protected static String tempPath = Tool.nvl(System.getProperty("java.io.tmpdir"), "/tmp");
+	protected static String tempPath = Tool.nvl(System.getProperty("java.io.tmpdir"), "/tmp"), storagePath = null;
 	protected static Class configClass = new Object(){}.getClass().getEnclosingClass();
 	
 	static {
@@ -47,13 +48,18 @@ public class Config {
 	}
 	
 	public static void initialize() {
-		File file = new File(Config.get("service.config.file"));
+		File file = new File(Config.get("service.config.file")), temp;
 		FileReader reader = null;
 		
 		try {
 			if (file != null && file.exists()) reader = new FileReader(file);
 			if (reader != null) properties.load(reader);
 		} catch (Throwable e) { e.printStackTrace(System.err); } finally { Tool.release(reader); }
+		
+		if (!get("service.path.temp").equals("")) { tempPath = get("service.path.temp"); remove("service.path.temp"); }
+		if (!get("service.path.storage").equals("")) { storagePath = get("service.path.storage"); remove("service.path.storage"); }
+		
+		if (!Tool.nvl(tempPath).equals("")) if (!(temp = new File(tempPath)).exists()) temp.mkdirs();
 	}
 
 	public static String all() {
@@ -75,21 +81,33 @@ public class Config {
 		return configs;
 	}
 	
-	public static String datenPath() {
-		Calendar calendar = Calendar.getInstance();
-		int year = calendar.get(Calendar.YEAR), month = calendar.get(Calendar.MONTH) + 1, day = calendar.get(Calendar.DAY_OF_MONTH);
-		
-		return year + File.separator + Tool.lpad(month + "", 2, "0")  + File.separator + Tool.lpad(day + "", 2, "0");
-	}
-	
-	public static String tempPath() {
-		return tempPath + File.separator + datenPath();
-	}
-	
 	public static String serverName() {
 		return serverName;
 	}
 	
+	public static String datenPath() {
+		Calendar calendar = Calendar.getInstance();
+		SimpleDateFormat format = new SimpleDateFormat("yyyy" + File.separator + "MM" + File.separator + "dd");
+
+		return format.format(calendar.getTime());
+	}
+	
+	public static String tempPath() { return tempPath(""); }
+	
+	public static String tempPath(String ... prefix) {
+		return Tool.cleanPath(tempPath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + File.separator + datenPath());
+	}
+	
+	public static String storagePath() { return storagePath(""); }
+	
+	public static String storagePath(String ... prefix) {
+		return Tool.cleanPath(storagePath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + File.separator + datenPath());
+	}
+	
+	public static String storagePrefix() {
+		return storagePath.replaceFirst(get("service.path.replace"), "");
+	}
+
 	public static Properties properties() {
 		Properties props = new Properties();
 		Object value = null;
@@ -207,5 +225,9 @@ public class Config {
 	
 	public static void set(String key, String value) {
 		config.put(key, value);
+	}
+	
+	public static void remove(String key) {
+		config.remove(key); properties.remove(key);
 	}
 }

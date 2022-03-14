@@ -1,8 +1,6 @@
 package com.eliall.util;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,12 +36,11 @@ import com.eliall.common.Config;
 
 import okhttp3.Response;
 
-@SuppressWarnings({ "rawtypes", "unchecked" })
+@SuppressWarnings({"rawtypes","unchecked"})
 public class Tool {
 	public final static String PHONE_NO = "([0-9]{2,3})-?([0-9]{3,4})-?([0-9]{4})";
 
 	private final static Pattern VALUE_PATTERN = Pattern.compile(".*@\\{([^@{}]+)\\}.*");
-	private final static String STRIP_TAGS = "html,title,head,link,script,meta,table,tr,td,div,span,font,style,center,embed,a,br,img";
 
 	private final static char[][] START_LETTERS = { { 'ㄱ' }, { 'ㄱ', 'ㄱ' }, { 'ㄴ' }, { 'ㄷ' }, { 'ㄷ', 'ㄷ' }, { 'ㄹ' }, { 'ㅁ' }, { 'ㅂ' }, { 'ㅂ', 'ㅂ' }, { 'ㅅ' }, { 'ㅅ', 'ㅅ' }, { 'ㅇ' }, { 'ㅈ' }, { 'ㅈ', 'ㅈ' }, { 'ㅊ' }, { 'ㅋ' }, { 'ㅌ' }, { 'ㅍ' }, { 'ㅎ' } };
 	private final static char[][] MIDDLE_LETTERS = { { 'ㅏ' }, { 'ㅐ' }, { 'ㅑ' }, { 'ㅒ' }, { 'ㅓ' }, { 'ㅔ' }, { 'ㅕ' }, { 'ㅖ' }, { 'ㅗ' }, { 'ㅗ', 'ㅏ' }, { 'ㅗ', 'ㅐ' }, { 'ㅗ', 'ㅣ' }, { 'ㅛ' }, { 'ㅜ' }, { 'ㅜ', 'ㅓ' }, { 'ㅜ', 'ㅔ' }, { 'ㅜ', 'ㅣ' }, { 'ㅠ' }, { 'ㅡ' }, { 'ㅡ', 'ㅣ' }, { 'ㅣ' } };
@@ -72,22 +69,7 @@ public class Tool {
 		return nvl(str, "");
 	}
 
-	public static String substring(String str, int len, boolean padding) {
-		if (str != null) {
-			if (str.length() < len) {
-				if (!padding) return str;
-				else return rpad(str, len, " ");
-			} else return str.substring(0, len);
-		}
-
-		return str;
-	}
-
-	public static String substring(String str, int len) {
-		return substring(str, len, false);
-	}
-
-	public static String bytestring(String str, int length) {
+	public static String substring(String str, int length) {
 		if (str != null && length >= 0) {
 			byte[] strbyte = str.getBytes();
 
@@ -130,12 +112,6 @@ public class Tool {
 		return str;
 	}
 
-	public static String stripTags(String str) {
-		if ((str = nvl(str)).equals("")) return "";
-
-		return str.replaceAll("<(\\/?)(?!\\/|" + STRIP_TAGS + ")([^<>]*)?>", "");
-	}
-
 	public static String join(String[] strSet, String needle) {
 		String returnString = "";
 
@@ -149,6 +125,66 @@ public class Tool {
 
 	public static String join(String[] strSet) {
 		return join(strSet, ",");
+	}
+	
+	public static String hostName() {
+		String hostName = null;
+		Process process = null;
+		BufferedReader reader = null;
+
+		try { hostName = InetAddress.getLocalHost().getHostName(); } catch (Throwable e) { }
+
+		if (nvl(hostName).equals("")) {
+			try {
+				process = Runtime.getRuntime().exec("hostname");
+				reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+				hostName = reader.readLine();
+
+				process.waitFor();
+			} catch (Throwable e) {
+				Tool.release(reader);
+			}
+		}
+
+		if (nvl(hostName).equals("")) {
+			try {
+				for (NetworkInterface netInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+					if (netInterface == null) continue;
+					if (netInterface.isLoopback()) continue;
+
+					for (InetAddress inetAddress : Collections.list(netInterface.getInetAddresses())) {
+						if (inetAddress == null) continue;
+						if (hostName != null) break;
+
+						if (!Tool.nvl(inetAddress.getHostName()).equals("")) hostName = inetAddress.getHostName();
+					}
+				}
+			} catch (Throwable e) { }
+		}
+
+		return hostName;
+	}
+
+	public static String networkAddress() {
+		try {
+			for (NetworkInterface netInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+				if (netInterface == null) continue;
+				if (netInterface.isLoopback()) continue;
+
+				for (InetAddress inetAddress : Collections.list(netInterface.getInetAddresses())) {
+					if (inetAddress == null) continue;
+					if (inetAddress.getHostAddress().matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) return inetAddress.getHostAddress();
+				}
+			}
+
+			return InetAddress.getLocalHost().getHostAddress();
+		} catch (Throwable e) { }
+
+		return null;
+	}
+	
+	public static String cleanPath(String path) {
+		return path != null ? path.replaceAll("[" + File.separator + "]+", File.separator) : path;
 	}
 
 	public static String dateFormat(Date date, String dateForm) {
@@ -188,7 +224,7 @@ public class Tool {
 		return numberFormat(Integer.parseInt(number));
 	}
 
-	public static String getFileName(String fileFullPath) {
+	public static String fileName(String fileFullPath) {
 		int slash = Math.max(fileFullPath.lastIndexOf('/'), fileFullPath.lastIndexOf('\\'));
 
 		if (slash > -1) fileFullPath = fileFullPath.substring(slash + 1);
@@ -196,7 +232,7 @@ public class Tool {
 		return fileFullPath;
 	}
 
-	public static String getQueryString(Map map) {
+	public static String queryString(Map map) {
 		String string = "";
 		
 		for (Object key : map.keySet()) {
@@ -246,67 +282,11 @@ public class Tool {
 		return value;
 	}
 
-	public static String getHostName() {
-		String hostName = null;
-		Process process = null;
-		BufferedReader reader = null;
-
-		try { hostName = InetAddress.getLocalHost().getHostName(); } catch (Throwable e) { }
-
-		if (nvl(hostName).equals("")) {
-			try {
-				process = Runtime.getRuntime().exec("hostname");
-				reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-				hostName = reader.readLine();
-
-				process.waitFor();
-			} catch (Throwable e) {
-				Tool.release(reader);
-			}
-		}
-
-		if (nvl(hostName).equals("")) {
-			try {
-				for (NetworkInterface netInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-					if (netInterface == null) continue;
-					if (netInterface.isLoopback()) continue;
-
-					for (InetAddress inetAddress : Collections.list(netInterface.getInetAddresses())) {
-						if (inetAddress == null) continue;
-						if (hostName != null) break;
-
-						if (!Tool.nvl(inetAddress.getHostName()).equals("")) hostName = inetAddress.getHostName();
-					}
-				}
-			} catch (Throwable e) { }
-		}
-
-		return hostName;
+	public static double percent(double percent) {
+		return percent(percent, 2);
 	}
 
-	public static String getNetworkAddress() {
-		try {
-			for (NetworkInterface netInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-				if (netInterface == null) continue;
-				if (netInterface.isLoopback()) continue;
-
-				for (InetAddress inetAddress : Collections.list(netInterface.getInetAddresses())) {
-					if (inetAddress == null) continue;
-					if (inetAddress.getHostAddress().matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) return inetAddress.getHostAddress();
-				}
-			}
-
-			return InetAddress.getLocalHost().getHostAddress();
-		} catch (Throwable e) { }
-
-		return null;
-	}
-
-	public static double getPercent(double percent) {
-		return getPercent(percent, 2);
-	}
-
-	public static double getPercent(double percent, int count) {
+	public static double percent(double percent, int count) {
 		for (int a=0 ; a<count+2 ; a++) percent = percent * 10;
 
 		String temp = String.valueOf(Math.round(percent));
@@ -316,94 +296,7 @@ public class Tool {
 		return (count > 0 ? Double.parseDouble(temp)*(10*count) : Double.parseDouble(temp));
 	}
 
-	public static byte[] copyBytes(byte[] src, int offset, int length) {
-		byte[] newBytes = new byte[length];
-
-		System.arraycopy(src, offset, newBytes, 0, length);
-
-		return newBytes;
-	}
-
-	public static byte[] copyBytes(byte[] src, int offset) {
-		return copyBytes(src, offset, src.length - offset);
-	}
-
-	public static byte[] copyBytes(byte[] src) {
-		return copyBytes(src, 0, src.length);
-	}
-
-	public static byte[] mergeBytes(byte[] base, byte[] paste, int offset, int length) throws IOException {
-		ByteArrayInputStream input = new ByteArrayInputStream(paste);
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		byte[] buffer = null, value = null;
-		
-		try {
-			if (offset > 0) input.skip(offset);
-			if (length > 0) input.read(buffer = new byte[length]);
-	
-			if (base != null) output.write(base);
-			if (buffer != null) output.write(buffer);
-			
-			value = output.toByteArray();
-		} finally { release(output); release(input); buffer = null; }
-
-		return value;
-	}
-
-	public static byte[] mergeBytes(byte[] base, byte[] paste, int offset) throws IOException {
-		return mergeBytes(base, paste, offset, paste.length - offset);
-	}
-
-	public static byte[] mergeBytes(byte[] ... bytes) throws IOException {
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		byte[] value = null;
-		
-		try {
-			for (int a=0 ; a<bytes.length ; a++) output.write(bytes[a]);
-
-			if (output != null) value = output.toByteArray();
-		} finally { release(output); }
-		
-		return value;
-	}
-
-	public static byte[] intBytes(int value) {
-		byte[] bytes = new byte[4];
-
-		ByteBuffer.wrap(bytes).putInt(value);
-
-		return bytes;
-	}
-	
-	public static byte[] longBytes(long value) {
-		byte[] bytes = new byte[8];
-
-		ByteBuffer.wrap(bytes).putLong(value);
-
-		return bytes;
-	}
-
-	public static byte[] doubleBytes(double value) {
-		byte[] bytes = new byte[8];
-
-		ByteBuffer.wrap(bytes).putDouble(value);
-
-		return bytes;
-	}
-
-	public static int bytesInt(byte[] bytes) {
-		return ByteBuffer.wrap(bytes).getInt();
-	}
-	
-	public static long bytesLong(byte[] bytes) {
-		return ByteBuffer.wrap(bytes).getLong();
-	}
-
-	public static double bytesDouble(byte[] bytes) {
-		return ByteBuffer.wrap(bytes).getDouble();
-	}
-
-	public static Calendar getOffsetMonth(String date, int month) {
+	public static Calendar offsetMonth(String date, int month) {
 		Calendar calendar = Calendar.getInstance(Locale.KOREA);
 		String day = "1";
 
@@ -418,11 +311,11 @@ public class Tool {
 		return calendar;
 	}
 
-	public static Calendar getOffsetMonth(Date date, int month) {
-		return getOffsetMonth(dateFormat(date, "yyyyMMdd"), month);
+	public static Calendar offsetMonth(Date date, int month) {
+		return offsetMonth(dateFormat(date, "yyyyMMdd"), month);
 	}
 
-	public static Calendar getOffsetDay(String date, int day) {
+	public static Calendar offsetDay(String date, int day) {
 		Calendar calendar = Calendar.getInstance(Locale.KOREA);
 
 		date = date.replaceAll("[^0-9]", "");
@@ -435,8 +328,30 @@ public class Tool {
 		return calendar;
 	}
 
-	public static Calendar getOffsetDay(Date date, int day) {
-		return getOffsetDay(dateFormat(date, "yyyyMMdd"), day);
+	public static Calendar offsetDay(Date date, int day) {
+		return offsetDay(dateFormat(date, "yyyyMMdd"), day);
+	}
+	
+	public static Map<String, String> split(String parameter, String del1, String del2) {
+		HashMap<String, String> result = new HashMap<String, String>();
+		StringTokenizer tokenizer = !nvl(parameter).equals("") ? new StringTokenizer(parameter, del1) : null;
+
+		if (tokenizer == null) return result;
+
+		String str, key;
+		int index;
+
+		while (tokenizer.hasMoreTokens()) {
+			str = tokenizer.nextToken();
+			index = str.indexOf(del2);
+
+			if (index == -1) continue;
+			else key = str.substring(0, index);
+
+			if (key != null) if (!result.containsKey(key = key.trim())) result.put(key, str.substring(index + 1, str.length()).replaceAll("%20", " ").replaceAll("%3D", "=").replaceAll("%25", "%").replaceAll("%26", "&"));
+		}
+
+		return result;
 	}
 
 	public static Map copyMap(Map src, Map dst, boolean overwrite, boolean collection) {
@@ -484,29 +399,7 @@ public class Tool {
 		return parsedInfo;
 	}
 
-	public static HashMap<String, String> split(String parameter, String del1, String del2) {
-		HashMap<String, String> result = new HashMap<String, String>();
-		StringTokenizer tokenizer = !nvl(parameter).equals("") ? new StringTokenizer(parameter, del1) : null;
-
-		if (tokenizer == null) return result;
-
-		String str, key;
-		int index;
-
-		while (tokenizer.hasMoreTokens()) {
-			str = tokenizer.nextToken();
-			index = str.indexOf(del2);
-
-			if (index == -1) continue;
-			else key = str.substring(0, index);
-
-			if (key != null) if (!result.containsKey(key = key.trim())) result.put(key, str.substring(index + 1, str.length()).replaceAll("%20", " ").replaceAll("%3D", "=").replaceAll("%25", "%").replaceAll("%26", "&"));
-		}
-
-		return result;
-	}
-
-	public static String[] toStringArray(Object object) throws IllegalArgumentException {
+	public static String[] stringArray(Object object) throws IllegalArgumentException {
 		Object[] objects = null;
 		String[] values = null;
 
@@ -551,18 +444,25 @@ public class Tool {
 		return true;
 	}
 
-	public static void release(Object object) {
-		if (object == null) return;
+	public static void release(Object ... objects) {
+		if (objects == null) return;
 
-		try {
-			if (object instanceof Closeable) { ((Closeable)object).close(); return; }
+		for (Object object : objects) {
+			if (object == null) continue;
 
-			if (object instanceof Map) { ((Map)object).clear(); return; }
-			if (object instanceof ByteBuffer) { ((ByteBuffer)object).clear(); return; }
-
-			if (object instanceof Process) { ((Process)object).destroy(); return; }
-			if (object instanceof HttpURLConnection) { ((HttpURLConnection)object).disconnect(); return; }
-		} catch (Exception e) {}
+			try {
+				if (object instanceof Closeable) { ((Closeable)object).close(); return; }
+				if (object instanceof AutoCloseable) { ((AutoCloseable)object).close(); return; }
+	
+				if (object instanceof Map) { ((Map)object).clear(); return; }
+				if (object instanceof ByteBuffer) { ((ByteBuffer)object).clear(); return; }
+	
+				if (object instanceof Process) { ((Process)object).destroy(); return; }
+				if (object instanceof HttpURLConnection) { ((HttpURLConnection)object).disconnect(); return; }
+				
+				if (object.getClass().getMethod("close") != null) object.getClass().getMethod("close").invoke(object);
+			} catch (Exception e) {}
+		}
 	}
 
 	public static void touch(File file) throws FileNotFoundException, IOException {
@@ -584,13 +484,7 @@ public class Tool {
 		
 		if (suffix != null && suffix.length > 0) output.write(suffix);
 	}
-	
-	public static void writeBytes(byte[] src, String path) throws IOException {
-		ByteArrayInputStream bis = null;
-		
-		try { writeStream(bis = new ByteArrayInputStream(src), path, null, null); } finally { Tool.release(bis); }
-	}
-	
+
 	public static void writeStream(InputStream input, String path) throws IOException {
 		writeStream(input, path, null, null);
 	}

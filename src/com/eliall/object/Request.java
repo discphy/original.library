@@ -83,8 +83,8 @@ public class Request extends EliObject implements HttpServletRequest {
 	@Override public String getContentType() { return request != null ? request.getContentType() : getClass().getName(); }
 	@Override public DispatcherType getDispatcherType() { return request != null ? request.getDispatcherType() : DispatcherType.REQUEST; }
 	@Override public ServletInputStream getInputStream() throws IOException { return request != null ? request.getInputStream() : null; }
-	@Override public String getLocalAddr() { return request != null ? request.getLocalAddr() : Tool.getNetworkAddress(); }
-	@Override public String getLocalName() { return request != null ? request.getLocalName() : Tool.getHostName(); }
+	@Override public String getLocalAddr() { return request != null ? request.getLocalAddr() : Tool.networkAddress(); }
+	@Override public String getLocalName() { return request != null ? request.getLocalName() : Tool.hostName(); }
 	@Override public int getLocalPort() { return request != null ? request.getLocalPort() : -1; }
 	@Override public Locale getLocale() { return request != null ? request.getLocale() : Locale.getDefault(); }
 	@Override public Enumeration<Locale> getLocales() { return request != null ? request.getLocales() : Collections.enumeration(Arrays.asList(getLocale())); }
@@ -99,7 +99,7 @@ public class Request extends EliObject implements HttpServletRequest {
 	@Override public int getRemotePort() { return request != null ? request.getLocalPort() : -1; }
 	@Override public RequestDispatcher getRequestDispatcher(String path) { return request != null ? request.getRequestDispatcher(path) : null; }
 	@Override public String getScheme() { return request != null ? request.getScheme() : "json"; }
-	@Override public String getServerName() { return request != null ? request.getServerName() : Tool.getHostName(); }
+	@Override public String getServerName() { return request != null ? request.getServerName() : Tool.hostName(); }
 	@Override public int getServerPort() { return request != null ? request.getServerPort() : -1; }
 	@Override public ServletContext getServletContext() { return request != null ? request.getServletContext() : null; }
 	@Override public boolean isAsyncStarted() { return request != null ? request.isAsyncStarted() : false; }
@@ -122,7 +122,7 @@ public class Request extends EliObject implements HttpServletRequest {
 	@Override public Collection<Part> getParts() throws IOException, ServletException { return request != null ? request.getParts() : null; }
 	@Override public String getPathInfo() { return request != null ? request.getPathInfo() : null; }
 	@Override public String getPathTranslated() { return request != null ? request.getPathTranslated() : null; }
-	@Override public String getQueryString() { return request != null ? request.getQueryString() : Tool.getQueryString(this); }
+	@Override public String getQueryString() { return request != null ? request.getQueryString() : Tool.queryString(this); }
 	@Override public String getRemoteUser() { return request != null ? request.getRemoteUser() : getString(USER); }
 	@Override public String getRequestURI() { return request != null ? request.getRequestURI() : getString(URI); }
 	@Override public StringBuffer getRequestURL() { return request != null ? request.getRequestURL() : new StringBuffer(getString(URL)); }
