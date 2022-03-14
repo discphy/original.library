@@ -93,15 +93,14 @@ public class Config {
 	}
 	
 	public static String tempPath() { return tempPath(""); }
-	
 	public static String tempPath(String ... prefix) {
 		return Tool.cleanPath(tempPath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + File.separator + datenPath());
 	}
 	
-	public static String storagePath() { return storagePath(""); }
-	
-	public static String storagePath(String ... prefix) {
-		return Tool.cleanPath(storagePath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + File.separator + datenPath());
+	public static String storagePath() { return storagePath(true, ""); }
+	public static String storagePath(boolean daten) { return storagePath(daten, ""); }
+	public static String storagePath(boolean daten, String ... prefix) {
+		return Tool.cleanPath(storagePath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + (daten ? File.separator + datenPath() : ""));
 	}
 	
 	public static String storagePrefix() {
