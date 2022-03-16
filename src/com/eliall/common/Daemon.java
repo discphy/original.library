@@ -15,7 +15,7 @@ import com.eliall.daemon.Logger;
 import com.eliall.process.Worker;
 
 public class Daemon extends Thread {
-	protected static final String uuid = UUID.nameUUIDFromBytes((Config.serverName() + System.currentTimeMillis()).getBytes()).toString();
+	protected final static String uuid = UUID.nameUUIDFromBytes((Config.serverName() + System.currentTimeMillis()).getBytes()).toString();
 
 	protected AtomicBoolean runnable = new AtomicBoolean(true), paused = new AtomicBoolean(false), stopped = new AtomicBoolean(false);
 	protected ConcurrentHashMap<String, Long> runnings = new ConcurrentHashMap<String, Long>();
