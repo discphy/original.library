@@ -19,7 +19,7 @@ import com.eliall.common.EliObject;
 @SuppressWarnings({"rawtypes","unchecked"})
 public class HTTP {
 	private static final String domainRegex1 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})(\\.[^.]{2})$", domainRegex2 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})$", filenameRegex = ".*;[ \t\r\n]*filename=\"?([^'\"]+)\"";
-	
+
 	public static void attribute(HttpServletRequest request, String key, Object value) {
 		if (request == null) return;
 		else request.setAttribute(key, value);
@@ -51,19 +51,19 @@ public class HTTP {
 
 	public static String cookie(HttpServletRequest request, String key) {
 		Cookie[] cookies = request.getCookies();
-		
+
 		if (cookies == null) return null;
 		if (Tool.nvl(key).equals("")) return null;
-		
+
 		for (Cookie cookie : cookies) {
 			if (cookie == null) continue;
-			
+
 			if (Tool.nvl(cookie.getName()).equals(key)) {
 				if (Tool.nvl(cookie.getValue()).equals("")) continue;
 				else return cookie.getValue();
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -73,49 +73,61 @@ public class HTTP {
 		if (Tool.nvl(addr).equals("")) addr = request.getHeader("X-User-Address");
 		if (Tool.nvl(addr).equals("")) addr = request.getHeader("X-Forwarded-For");
 		if (Tool.nvl(addr).equals("")) addr = request.getHeader("X-Cluster-Client-Ip");
-		
+
 		if (Tool.nvl(addr).equals("")) addr = request.getHeader("Proxy-Client-IP");
 		if (Tool.nvl(addr).equals("")) addr = request.getHeader("WL-Proxy-Client-IP");
 
 		if (Tool.nvl(addr).equals("")) addr = request.getRemoteAddr();
-		
+
 		return addr;
 	}
-	
+
 	public static String domain(HttpServletRequest request) {
 		return domain(request.getServerName());
 	}
 
 	public static String domain(String domain) {
 		String filtered = domain;
-		
+
 		if (!domain.startsWith(".") && domain.split("[.]").length > 2) {
 			if (domain.matches(domainRegex1)) filtered = domain.replaceFirst(domainRegex1, "$2$3$4");
 			else if (domain.matches(domainRegex2)) filtered = domain.replaceFirst(domainRegex2, "$2$3");
-			
+
 			if (filtered.startsWith(".") && filtered.length() <= 6) filtered = domain;
 		}
-		
+
 		return filtered.startsWith(".") ? filtered : "." + filtered;
 	}
 
-	public static EliObject parameters(HttpServletRequest request, Object parameters) {
+	public static EliObject parameters(HttpServletRequest request, Object references) {
 		String contentType = Tool.nvl(request.getContentType()).trim().toLowerCase();
-		EliObject newParameters = new EliObject(parameters);
-		
+		EliObject parameters = new EliObject(references), origins = null;
+
 		Map<String, String[]> parameterMap = request.getParameterMap();
+
+		if (request.getHeader(Config.XHR_HEADER_KEY) != null && (origins = new EliObject(request.getHeader(Config.XHR_HEADER_KEY))).size() > 0) {
+			for (String key : origins.keySet()) request.setAttribute(key, origins.get(key));
+			
+			if (request.getAttribute(Config.SITE_CODE_KEY) != null) parameters.put("site_no", request.getAttribute(Config.SITE_CODE_KEY));
+			if (request.getAttribute(Config.USER_IP_KEY) != null) parameters.put("user_ip", request.getAttribute(Config.USER_IP_KEY));
+		} else {
+			if (request.getHeader(Config.SITE_CODE_KEY) != null) parameters.put("site_no", request.getHeader(Config.SITE_CODE_KEY));
+			if (request.getHeader(Config.USER_IP_KEY) != null) parameters.put("user_ip", request.getHeader(Config.USER_IP_KEY));
+		}
+
+		if (parameters.get("user_ip") == null) parameters.put("user_ip", address(request));
 
 		if (parameterMap != null) {
 			for (String key : parameterMap.keySet()) {
 				String[] value = parameterMap.get(key);
 				List<String> values = value != null && value.length > 1 ? new ArrayList<String>() : null;
-				
+
 				if (values != null) for (String string : value) values.add(string);
-				if (values != null) newParameters.put(key, values);
-				else if (value.length > 0) newParameters.put(key, value[0]);
+				if (values != null) parameters.put(key, values);
+				else if (value.length > 0) parameters.put(key, value[0]);
 			}
 		}
-		
+
 		if (request.getMethod().toUpperCase().equals("POST")) {
 			if (contentType.startsWith("multipart")) {
 				File temp = new File(Config.tempPath());
@@ -135,46 +147,48 @@ public class HTTP {
 						if (part.getSize() < 1) continue;
 						else if (Tool.nvl(part.getContentType()).length() < 3) continue;
 						else if (!temp.exists()) temp.mkdirs();
-						
+
 						try {
 							object = new EliObject();
 							path = temp.getAbsolutePath() + File.separator + request.hashCode() + "_" + (count++) + ".tmp";
-							
+
 							input = part.getInputStream();
 							output = new FileOutputStream(path);
-							
+
 							while ((readed = input.read(buffer, 0, buffer.length)) != -1) output.write(buffer, 0, readed);
-							
+
 							object.put("path", path);
 							object.put("name", part.getName());
 							object.put("type", part.getContentType());
 							object.put("file", part.getHeader("content-disposition").replaceFirst(filenameRegex, "$1"));
-							
+
 							files.add(object);
 						} catch (Throwable e) { } finally {
 							Tool.release(output);
 							Tool.release(input);
 						}
 					}
-				} catch (Throwable e) { e.printStackTrace(System.err); } finally { if (files.size() > 0) newParameters.put(Config.FILES_KEY, files); }
+				} catch (Throwable e) { e.printStackTrace(System.err); } finally { if (files.size() > 0) parameters.put(Config.FILES_KEY, files); }
 			} else if (!contentType.startsWith("application/json")) {
 				ByteArrayOutputStream body = null;
 				InputStream stream = null;
-				
+
 				byte[] buffer = new byte[1024];
 				int readed = -1;
-	
+
 				try {
 					stream = request.getInputStream();
 					body = new ByteArrayOutputStream();
-					
+
 					while ((readed = stream.read(buffer, 0, buffer.length)) != -1) body.write(buffer, 0, readed);
 
-					newParameters.putAll(JSON.stringToMap((String)request.getAttribute("body")), true);
+					parameters.putAll(JSON.stringToMap((String)request.getAttribute("body")), true);
 				} catch (Throwable e) { e.printStackTrace(System.err); } finally { Tool.release(body); }
-			} else try { newParameters.putAll(JSON.streamToMap(request.getInputStream()), true); } catch (Throwable e) { }
+			} else try { parameters.putAll(JSON.streamToMap(request.getInputStream()), true); } catch (Throwable e) { }
 		}
 
-		return newParameters;
+		return parameters;
 	}
+
+	public static EliObject parameters(HttpServletRequest request) { return parameters(request, null); }
 }
