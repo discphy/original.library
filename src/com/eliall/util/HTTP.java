@@ -18,7 +18,10 @@ import com.eliall.common.EliObject;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class HTTP {
-	private static final String domainRegex1 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})(\\.[^.]{2})$", domainRegex2 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})$", filenameRegex = ".*;[ \t\r\n]*filename=\"?([^'\"]+)\"";
+	private final static String domainRegex1 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})(\\.[^.]{2})$", domainRegex2 = "(.*)(\\.[^.]+)(\\.[^.]{2,3})$", filenameRegex = ".*;[ \t\r\n]*filename=\"?([^'\"]+)\"";
+	
+	public static Map headerKeys = null;
+	public static String addressKey = null;
 
 	public static void attribute(HttpServletRequest request, String key, Object value) {
 		if (request == null) return;
@@ -100,26 +103,24 @@ public class HTTP {
 	}
 
 	public static EliObject parameters(HttpServletRequest request, Object references) {
-		String contentType = Tool.nvl(request.getContentType()).trim().toLowerCase();
+		String type = Tool.nvl(request.getContentType()).trim().toLowerCase();
 		EliObject parameters = new EliObject(references), origins = null;
 
-		Map<String, String[]> parameterMap = request.getParameterMap();
-
-		if (request.getHeader(Config.XHR_HEADER_KEY) != null && (origins = new EliObject(request.getHeader(Config.XHR_HEADER_KEY))).size() > 0) {
-			for (String key : origins.keySet()) request.setAttribute(key, origins.get(key));
-			
-			if (request.getAttribute(Config.SITE_CODE_KEY) != null) parameters.put("site_no", request.getAttribute(Config.SITE_CODE_KEY));
-			if (request.getAttribute(Config.USER_IP_KEY) != null) parameters.put("user_ip", request.getAttribute(Config.USER_IP_KEY));
-		} else {
-			if (request.getHeader(Config.SITE_CODE_KEY) != null) parameters.put("site_no", request.getHeader(Config.SITE_CODE_KEY));
-			if (request.getHeader(Config.USER_IP_KEY) != null) parameters.put("user_ip", request.getHeader(Config.USER_IP_KEY));
+		Map<String, String[]> params = request.getParameterMap();
+		Object xhrs = request.getHeader(Config.XHR_HEADER_KEY);
+		
+		if (xhrs != null && (origins = new EliObject(xhrs)).size() > 0) for (String key : origins.keySet()) request.setAttribute(key, origins.get(key));
+		
+		if (headerKeys != null) for (Object key : headerKeys.keySet()) {
+			if (parameters.get(key) == null) if (request.getHeader(key.toString()) != null) parameters.put(headerKeys.get(key).toString(), request.getHeader(key.toString()));
+			if (parameters.get(key) == null) if (request.getAttribute(key.toString()) != null) parameters.put(headerKeys.get(key).toString(), request.getAttribute(key.toString()));
 		}
 
-		if (parameters.get("user_ip") == null) parameters.put("user_ip", address(request));
+		if (parameters.get(addressKey) == null) parameters.put(addressKey, address(request));
 
-		if (parameterMap != null) {
-			for (String key : parameterMap.keySet()) {
-				String[] value = parameterMap.get(key);
+		if (params != null) {
+			for (String key : params.keySet()) {
+				String[] value = params.get(key);
 				List<String> values = value != null && value.length > 1 ? new ArrayList<String>() : null;
 
 				if (values != null) for (String string : value) values.add(string);
@@ -129,7 +130,7 @@ public class HTTP {
 		}
 
 		if (request.getMethod().toUpperCase().equals("POST")) {
-			if (contentType.startsWith("multipart")) {
+			if (type.startsWith("multipart")) {
 				File temp = new File(Config.tempPath());
 				List files = new ArrayList();
 
@@ -169,7 +170,7 @@ public class HTTP {
 						}
 					}
 				} catch (Throwable e) { e.printStackTrace(System.err); } finally { if (files.size() > 0) parameters.put(Config.FILES_KEY, files); }
-			} else if (!contentType.startsWith("application/json")) {
+			} else if (!type.startsWith("application/json")) {
 				ByteArrayOutputStream body = null;
 				InputStream stream = null;
 
