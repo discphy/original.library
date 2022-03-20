@@ -13,6 +13,7 @@ import com.eliall.util.Tool;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.ConnectionPool;
 import okhttp3.Dispatcher;
 import okhttp3.FormBody;
 import okhttp3.MediaType;
@@ -149,9 +150,9 @@ public class Worker implements Callback {
 	}
 
 	private static OkHttpClient.Builder getHttpBuilder(long connectTimeout, long readTimeout, long writeTimeout) {
-		OkHttpClient.Builder builder = new OkHttpClient.Builder();
-		int hosts = Config.MAX_THREADS, requests = (int)Math.ceil(hosts * 1.5);
+		OkHttpClient.Builder builder = new OkHttpClient.Builder().dispatcher(getDispatcher(Config.MAX_THREADS * 2, Config.MAX_THREADS * 4));
+		ConnectionPool pool = new ConnectionPool(Config.MAX_THREADS, (connectTimeout + readTimeout + writeTimeout) * 5 / 60, TimeUnit.MINUTES);
 
-    	return builder.dispatcher(getDispatcher(hosts, requests)).connectTimeout(connectTimeout, TimeUnit.SECONDS).readTimeout(readTimeout, TimeUnit.SECONDS).writeTimeout(writeTimeout, TimeUnit.SECONDS);
+    	return builder.connectionPool(pool).connectTimeout(connectTimeout, TimeUnit.SECONDS).readTimeout(readTimeout, TimeUnit.SECONDS).writeTimeout(writeTimeout, TimeUnit.SECONDS);
 	}
 }
