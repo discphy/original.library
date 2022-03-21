@@ -28,7 +28,7 @@ public class Worker implements Callback {
 	public final static ExecutorService taskExecutor = Executors.newWorkStealingPool();
 
 	private final static AtomicInteger threadCount = new AtomicInteger();
-	
+
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			try { taskExecutor.shutdown(); taskExecutor.awaitTermination(3, TimeUnit.SECONDS); }
@@ -40,12 +40,12 @@ public class Worker implements Callback {
 		String processes = Tool.nvl(call.request().header("Next-Process")).trim(), process = null;
 		EliObject result = null;
 		int index = -1;
-		
+
 		try {
 			if (response.code() == 200) {
 				result = new EliObject(JSON.streamToMap(response.body().byteStream()));
 				process = processes.indexOf(">") > 0 ? processes.substring(0, processes.indexOf(">")) : processes;
-				
+
 				if ((index = processes.indexOf(">")) > 0) {
 					process = processes.substring(0, index);
 					processes = index + 1 < processes.length() ? processes.substring(index + 1, processes.length()) : null;
@@ -53,7 +53,7 @@ public class Worker implements Callback {
 					process = processes;
 					processes = null;
 				}
-				
+
 				if (process.equals("")) return;
 				if (result == null || result.size() <= 0) return;
 
@@ -65,7 +65,7 @@ public class Worker implements Callback {
 			Worker.decrease(process);
 		}
 	}
-	
+
 	public void onFailure(Call call, IOException exception) {
 		String[] processes = Tool.nvl(call.request().header("Next-Process")).trim().split(">");
 		String bodyString = Tool.nvl(requestBody(call.request())), errorString = exception != null ? Tool.nvl(exception.getMessage()).trim() : "";
@@ -73,24 +73,24 @@ public class Worker implements Callback {
 
 		try {
 			if (bodyString.startsWith("{") && bodyString.endsWith("}")) errorObject.putAll(JSON.stringToMap(bodyString), false);
-			
+
 			if (!errorObject.containsKey("response_code")) errorObject.put("response_code", 999);
 			if (!errorObject.containsKey("response_message")) errorObject.put("response_message", exception.toString());
 
 			if (processes.length <= 0 || Tool.nvl(processes[0]).equals("")) return;
-			
+
 			threadCount.incrementAndGet();
 			localClient.newCall(new Request.Builder().url(Config.url(processes[0])).post(jsonBody(errorObject.toString())).build()).enqueue(this);
 		} finally {
 			threadCount.decrementAndGet();
 		}
 	}
-	
+
 	public static void clean() {
 		localClient.connectionPool().evictAll();
 		remoteClient.connectionPool().evictAll();
 	}
-	
+
 	public static void execute(Runnable task) {
 		if (taskExecutor.isShutdown() || taskExecutor.isTerminated()) return;
 		else if (task != null) taskExecutor.submit(task);
@@ -99,7 +99,7 @@ public class Worker implements Callback {
 	public static int threads() {
 		return threadCount.get();
 	}
-	
+
 	public static int connections() {
 		return localClient.dispatcher().runningCallsCount() + remoteClient.dispatcher().runningCallsCount();
 	}
@@ -111,11 +111,11 @@ public class Worker implements Callback {
 	public static int increase(String name) {
 		try { return threadCount.incrementAndGet(); } finally { }
 	}
-	
+
 	public static int decrease(String name) {
 		try { return threadCount.decrementAndGet(); } finally { }
 	}
-	
+
 	public static String requestBody(Request request) {
 		if (request == null || request.body() == null) return null;
 		
@@ -131,21 +131,21 @@ public class Worker implements Callback {
 	public static RequestBody jsonBody(Object body) {
 		return RequestBody.create(body instanceof String ? (String)body : body.toString(), MediaType.parse("application/json; charset=" + Config.CHARSET));
 	}
-	
+
 	public static RequestBody formBody(EliObject object) {
 		FormBody.Builder body = new FormBody.Builder();
-		
+
 		for (String key : object.keySet()) { if (key == null) continue; else body.add(key, object.getString(key, "")); }
-		
+
 		return body.build(); 
 	}
-	
+
 	public static Dispatcher getDispatcher(int maxPerHost, int maxRequests) {
 		Dispatcher dispatcher = new Dispatcher();
-		
+
     	dispatcher.setMaxRequestsPerHost(maxPerHost);
     	dispatcher.setMaxRequests(maxRequests);
-    	
+
     	return dispatcher;
 	}
 
