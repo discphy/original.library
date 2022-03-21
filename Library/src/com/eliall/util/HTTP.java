@@ -116,7 +116,7 @@ public class HTTP {
 			if (parameters.get(key) == null) if (request.getAttribute(key.toString()) != null) parameters.put(headerKeys.get(key).toString(), request.getAttribute(key.toString()));
 		}
 
-		if (parameters.get(addressKey) == null) parameters.put(addressKey, address(request));
+		if (addressKey != null) if (parameters.get(addressKey) == null) parameters.put(addressKey, address(request));
 
 		if (params != null) {
 			for (String key : params.keySet()) {
@@ -190,6 +190,4 @@ public class HTTP {
 
 		return parameters;
 	}
-
-	public static EliObject parameters(HttpServletRequest request) { return parameters(request, null); }
 }
