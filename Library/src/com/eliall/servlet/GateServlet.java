@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URLEncoder;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -28,8 +27,6 @@ import com.eliall.util.Tool;
 @SuppressWarnings({"rawtypes","unchecked"})
 @MultipartConfig(fileSizeThreshold=1024*1024*16, maxFileSize=1024*1024*32, maxRequestSize=1024*1024*64)
 public class GateServlet extends HttpServlet {
-	public static final ConcurrentHashMap<String, Object> classCache = new ConcurrentHashMap<String, Object>(), methodCache = new ConcurrentHashMap<String, Object>();
-	
 	private static final Class[] methodParams = { HttpServletRequest.class, HttpServletResponse.class, EliObject.class }, viewParams = { HttpServletRequest.class, HttpServletResponse.class };
 	private static final String templateRegex = "/(.+)\\." + Config.EXTENSION + "$";
 
@@ -56,7 +53,7 @@ public class GateServlet extends HttpServlet {
 		request.setAttribute("page", URLEncoder.encode(request.getRequestURI() + (!Tool.nvl(request.getQueryString()).equals("") ? "?" + request.getQueryString() : ""), Config.CHARSET));
 
 		try {
-			String names[] = ((String)request.getAttribute(Config.METHOD_KEY)).split("[_]+"), template = null;
+			String names[] = ((String)request.getAttribute(Config.METHOD_KEY)).split("[_]+"), template = null, key = null;
 			StringBuilder methodName = new StringBuilder(); request.removeAttribute(Config.METHOD_KEY);
 			
 			Method method = null;
@@ -84,7 +81,7 @@ public class GateServlet extends HttpServlet {
 								Class cls = controller.getClass();
 								Method mthd = null;
 
-								if ((mthd = (Method)methodCache.get(cls.getName() + "." + item)) == null) {
+								if ((mthd = Mapping.method(key = cls.getName() + "." + item)) == null) {
 									while (cls != null) {
 										if (mthd == null) try { mthd = cls.getDeclaredMethod(item, viewParams); } catch (Throwable e) { }
 										if (mthd == null) try { mthd = cls.getMethod(item, viewParams); } catch (Throwable e) { }
@@ -93,7 +90,7 @@ public class GateServlet extends HttpServlet {
 										else cls = cls.getSuperclass();
 									}
 
-									if (mthd != null) if (mthd.getAnnotation(Cache.class) != null) methodCache.put(cls.getName() + "." + item, mthd);
+									if (mthd != null) if (mthd.getAnnotation(Cache.class) != null) Mapping.method(key, mthd);
 								}
 
 								if (mthd != null) {
@@ -150,11 +147,11 @@ public class GateServlet extends HttpServlet {
 		if (uris == null || uris.length <= 0) return null;
 		else request.setAttribute(Config.METHOD_KEY, uris[uris.length - 1]);
 		
-		if ((instance = classCache.get(uri)) != null) return instance;
+		if ((instance = Mapping.clazz(uri)) != null) return instance;
 
 		if (uris.length > 1) {
 			try {
-				if ((name = Mapping.get("/" + uri.substring(0, uri.length() - uris[uris.length - 1].length() - 1), "")).equals("")) {
+				if ((name = Mapping.name("/" + uri.substring(0, uri.length() - uris[uris.length - 1].length() - 1))).equals("")) {
 					packages = (name = uri.substring(0, uri.length() - uris[uris.length - 1].length() - 1)).split("/");
 					
 					if (packages.length <= 1) name = Character.toString(name.charAt(0)).toUpperCase() + name.substring(1);
@@ -165,7 +162,7 @@ public class GateServlet extends HttpServlet {
 				
 				if (clazz == null || Modifier.isAbstract(clazz.getModifiers())) return null;
 
-				if (clazz != null && (instance = clazz.getDeclaredConstructor().newInstance()) != null) if (clazz.getConstructor().getAnnotation(Cache.class) != null) classCache.put(uri, instance);
+				if ((instance = clazz.getDeclaredConstructor().newInstance()) != null) if (clazz.getConstructor().getAnnotation(Cache.class) != null) Mapping.clazz(uri, instance);
 			} catch (Throwable e) { if (!(e instanceof ClassNotFoundException)) e.printStackTrace(System.err); } finally { Logger.debug("Controller: " + name); }
 		}
 
