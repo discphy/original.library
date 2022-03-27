@@ -17,6 +17,7 @@ import com.eliall.daemon.Logger;
 import com.eliall.definition.Cache;
 import com.eliall.definition.View;
 import com.eliall.util.HTTP;
+import com.eliall.util.Security;
 import com.eliall.util.Tool;
 
 import okhttp3.Call;
@@ -32,73 +33,6 @@ public class BaseController {
 	@View(uri = "/pc.jsp", mobile = "/mobile.jsp", method = "method")
 	public void test(HttpServletRequest request, HttpServletResponse response, EliObject parameters) {
 		json(request, response, parameters);
-	}
-
-	public void ajax(HttpServletRequest request, HttpServletResponse response, EliObject parameters) {
-		json(request, response, parameters.set("ajax_received", true).set("origin-headers", request.getHeader("Origin-Headers")));
-	}
-
-	protected HttpServletRequest request(HttpServletRequest request, String key, Object value) {
-		if (key != null && value != null) request.setAttribute(key, value); return request;
-	}
-
-	protected HttpServletResponse response(HttpServletRequest request, HttpServletResponse response, Object object) {
-		EliObject parameters = object instanceof EliObject ? (EliObject)object : new EliObject(object);
-
-		if (request != null) if (request.getMethod().toUpperCase().equals("OPTIONS")) if (response != null) response.setStatus(HttpServletResponse.SC_OK);
-		if (response != null) { if (response.getContentType() == null) response.setContentType(HTML_TYPE); response.setCharacterEncoding(Config.CHARSET.toLowerCase()); }
-
-		if (object != null) {
-			String method = null, url = null, key = null, value = null;
-			Matcher matcher = null;
-			
-			if (parameters.containsKey("@__redirect")) url = (String)parameters.remove("@__redirect");
-			else if (object instanceof String) url = (String)object;
-
-			if (url != null && (matcher = REDIRECT_PATTERN.matcher(url)).find()) {
-				method = matcher.group(1);
-				url = matcher.group(2);
-			} else url = null;
-
-			if (url != null) {
-				if (Tool.nvl(method, "GET").toUpperCase().equals("POST")) {
-					try {
-						response.setContentType(HTML_TYPE); response.getWriter().write("<html><head></head><body><form name=\"redirect\" method='POST' action=\"" + url + "\">");
-						
-						for (String name : parameters.keySet()) response.getWriter().write("<input type='hidden' name='" + name + "' value=\"" + parameters.get(name) + "\">");
-						for (String param : Tool.nvl(parameters.remove("@__query", "")).split("[&]+")) {
-							if (param.indexOf("=") < 0) continue;
-							else { key = param.substring(param.indexOf("=")); value = param.substring(param.indexOf("=") + 1, param.length()); }
-							
-							response.getWriter().write("<input type='hidden' name='" + key + "' value=\"" + value + "\">");
-						}
-						
-						response.getWriter().write("</form><script>document.forms[\"redirect\"].submit();</script></body></html>");
-					} catch (Throwable e) { }
-				} else {
-					url += (url.indexOf("?") > 0 ? "&" : "?") + parameters.remove("@__query", "");
-					url += "&" + Tool.nvl(request.getQueryString()); url = url.replaceAll("[&]+", "&");
-
-					try { response.sendRedirect(url); } catch (Throwable e) { }
-				}
-			} else try { response.getWriter().write(object.toString()); } catch (Throwable e) { }
-		}
-		
-		return response;
-	}
-
-	protected String address(HttpServletRequest request) { return HTTP.address(request); }
-
-	protected EliObject agent(HttpServletRequest request) {
-		EliObject info = new EliObject();
-		String agent = Tool.nvl(request.getHeader(Config.APP_AGENT_KEY), " /" + HTTP.cookie(request, Config.APP_AGENT_KEY.toLowerCase().replaceAll("-", "_"))), strings[] = null;
-		
-		if ((strings = agent.split("[/]+")).length >= 3) {
-			info.put("platform", strings[1]);
-			info.put("version", strings[2]);
-		}
-		
-		return info;
 	}
 
 	@Cache
@@ -176,6 +110,79 @@ public class BaseController {
 	protected void error(String clazz, String method, String message, Throwable error, SqlSession session) {
 		Logger.error("[" + clazz + (method != null ? "." + method + "()" : "") + "] " + message, error);
 		Database.rollback(session);
+	}
+
+	protected HttpServletRequest request(HttpServletRequest request, String key, Object value) {
+		if (key != null && value != null) request.setAttribute(key, value); return request;
+	}
+
+	protected HttpServletResponse response(HttpServletRequest request, HttpServletResponse response, Object object) {
+		EliObject parameters = object instanceof EliObject ? (EliObject)object : new EliObject(object);
+
+		if (request != null) if (request.getMethod().toUpperCase().equals("OPTIONS")) if (response != null) response.setStatus(HttpServletResponse.SC_OK);
+		if (response != null) { if (response.getContentType() == null) response.setContentType(HTML_TYPE); response.setCharacterEncoding(Config.CHARSET.toLowerCase()); }
+
+		if (object != null) {
+			String method = null, url = null, key = null, value = null;
+			Matcher matcher = null;
+			
+			if (parameters.containsKey("@__redirect")) url = (String)parameters.remove("@__redirect");
+			else if (object instanceof String) url = (String)object;
+
+			if (url != null && (matcher = REDIRECT_PATTERN.matcher(url)).find()) {
+				method = matcher.group(1);
+				url = matcher.group(2);
+			} else url = null;
+
+			if (url != null) {
+				if (Tool.nvl(method, "GET").toUpperCase().equals("POST")) {
+					try {
+						response.setContentType(HTML_TYPE); response.getWriter().write("<html><head></head><body><form name=\"redirect\" method='POST' action=\"" + url + "\">");
+						
+						for (String name : parameters.keySet()) response.getWriter().write("<input type='hidden' name='" + name + "' value=\"" + parameters.get(name) + "\">");
+						for (String param : Tool.nvl(parameters.remove("@__query", "")).split("[&]+")) {
+							if (param.indexOf("=") < 0) continue;
+							else { key = param.substring(param.indexOf("=")); value = param.substring(param.indexOf("=") + 1, param.length()); }
+							
+							response.getWriter().write("<input type='hidden' name='" + key + "' value=\"" + value + "\">");
+						}
+						
+						response.getWriter().write("</form><script>document.forms[\"redirect\"].submit();</script></body></html>");
+					} catch (Throwable e) { }
+				} else {
+					url += (url.indexOf("?") > 0 ? "&" : "?") + parameters.remove("@__query", "");
+					url += "&" + Tool.nvl(request.getQueryString()); url = url.replaceAll("[&]+", "&");
+
+					try { response.sendRedirect(url); } catch (Throwable e) { }
+				}
+			} else try { response.getWriter().write(object.toString()); } catch (Throwable e) { }
+		}
+		
+		return response;
+	}
+
+	protected String address(HttpServletRequest request) {
+		return Tool.nvl(request.getHeader(Config.USER_IP_KEY), HTTP.address(request));
+	}
+	
+	protected String encrypt(String source) {
+		try { return Security.encrypt(source); } catch (Throwable e) { return source; }
+	}
+	
+	protected String decrypt(String source) {
+		try { return Security.decrypt(source); } catch (Throwable e) { return source; }
+	}
+
+	protected EliObject agent(HttpServletRequest request) {
+		EliObject info = new EliObject();
+		String agent = Tool.nvl(request.getHeader(Config.APP_AGENT_KEY), " /" + HTTP.cookie(request, Config.APP_AGENT_KEY.toLowerCase().replaceAll("-", "_"))), strings[] = null;
+		
+		if ((strings = agent.split("[/]+")).length >= 3) {
+			info.put("platform", strings[1]);
+			info.put("version", strings[2]);
+		}
+		
+		return info;
 	}
 
 	protected static class HttpCallback implements Callback {

@@ -80,21 +80,31 @@ public class Start {
 
 	private static void setupMapping(String configPath) {
 		FileInputStream inputStream = null;
-		EliObject mappingConfig = null;
+		EliObject uriConfig = null;
 
 		try {
 			inputStream = new FileInputStream((configPath + File.separator + "uris.json").replaceAll("[/]+", "/"));
-			mappingConfig = new EliObject(JSON.streamToMap(inputStream));
+			uriConfig = new EliObject(JSON.streamToMap(inputStream));
 
-			if (mappingConfig.containsKey("mapping_list")) {
-				for (Object object : mappingConfig.getList("mapping_list")) {
-					EliObject mappingObject = new EliObject(object);
-					String clazz = mappingObject.getString("class", "");
+			if (uriConfig.containsKey("mapping_list")) {
+				for (Object object : uriConfig.getList("mapping_list")) {
+					EliObject mapping = new EliObject(object);
+					String clazz = mapping.getString("class", "");
 	
-					Mapping.put(mappingObject.getString("uri"), clazz.startsWith(".") ? (mappingConfig.getString("root_package", "") + clazz).replaceAll("[\\.]+", ".") : clazz);
+					Mapping.name(mapping.getString("uri"), clazz.startsWith(".") ? (uriConfig.getString("root_package", "") + clazz).replaceAll("[\\.]+", ".") : clazz);
 				}
 			}
-		} catch (Throwable e) { System.err.println("Setting up Mapping configuration failed: " + e.getMessage()); } finally { Tool.release(inputStream); }
+			
+			if (uriConfig.containsKey("rewrite_list")) {
+				for (Object object : uriConfig.getList("rewrite_list")) {
+					EliObject mapping = new EliObject(object);
+					String rewrite = mapping.getString("rewrite", "");
+					
+					if (rewrite.equals("")) continue;
+					else Mapping.rewrite(mapping.getString("uri"), rewrite);
+				}
+			}
+		} catch (Throwable e) { System.err.println("Setting up URI configuration failed: " + e.getMessage()); } finally { Tool.release(inputStream); }
 	}
 
 	private static void setupDatabase(String configPath) {
