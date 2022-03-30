@@ -162,7 +162,7 @@ public class GateServlet extends HttpServlet {
 				
 				if (clazz == null || Modifier.isAbstract(clazz.getModifiers())) return null;
 
-				if ((instance = clazz.getDeclaredConstructor().newInstance()) != null) if (clazz.getConstructor().getAnnotation(Cache.class) != null) Mapping.clazz(uri, instance);
+				if ((instance = clazz.getDeclaredConstructor().newInstance()) != null) if (clazz.getDeclaredConstructor().getAnnotation(Cache.class) != null) Mapping.clazz(uri, instance);
 			} catch (Throwable e) { if (!(e instanceof ClassNotFoundException)) e.printStackTrace(System.err); } finally { Logger.debug("Controller: " + name); }
 		}
 
