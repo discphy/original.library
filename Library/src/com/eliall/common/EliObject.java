@@ -18,6 +18,9 @@ public class EliObject extends HashMap<String, Object> {
 	public static String toString(Object object) { return JSON.objectToString(object, false); }
 	public static String toString(Object object, boolean pretty) { return JSON.objectToString(object, pretty); }
 	
+	public static EliObject object(Object object) { return object != null ? instance(object) : null; }
+	public static EliObject instance(Object object) { return object instanceof EliObject ? (EliObject)object : new EliObject(object); }
+	
 	public EliObject() { super(); }
 	public EliObject(String key, Object value) { put(key, value); }
 
