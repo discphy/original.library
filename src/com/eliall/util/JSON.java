@@ -60,16 +60,6 @@ public class JSON {
 		return null;
 	}
 	
-	public static List<Object> stringToList(String json) {
-		JsonFactory jsonFactory = new JsonFactory();
-
-		try {
-			return mapper.readValue(jsonFactory.createParser(json), new TypeReference<ArrayList<Object>>() {});
-		} catch (Throwable e) { }
-		
-		return null;
-	}
-	
 	public static Map<String, Object> streamToMap(InputStream json) {
 		JsonFactory jsonFactory = new JsonFactory();
 
@@ -90,14 +80,54 @@ public class JSON {
 		return null;
 	}
 	
-	public static String xmlToJsonString(String xml) {
-		XmlMapper xmlMapper = null;
+	public static List<Object> stringToList(String json) {
+		JsonFactory jsonFactory = new JsonFactory();
 
-		try { 
-			(xmlMapper = new XmlMapper()).registerModule(new SimpleModule().addDeserializer(JsonNode.class, new DuplicateToArrayJsonNodeDeserializer()));
+		try {
+			return mapper.readValue(jsonFactory.createParser(json), new TypeReference<ArrayList<Object>>() {});
+		} catch (Throwable e) { }
+		
+		return null;
+	}
+	
+	public static List<Object> streamToList(InputStream json) {
+		JsonFactory jsonFactory = new JsonFactory();
 
-			return mapper.writeValueAsString(xmlMapper.readTree(xml));
-		} catch (Throwable e) { return null; }
+		try {
+			return mapper.readValue(jsonFactory.createParser(json), new TypeReference<ArrayList<Object>>() {});
+		} catch (Throwable e) { }
+		
+		return null;
+	}
+	
+	public static List<Object> bytesToList(byte[] bytes) {
+		JsonFactory jsonFactory = new JsonFactory();
+
+		try {
+			return mapper.readValue(jsonFactory.createParser(bytes), new TypeReference<ArrayList<Object>>() {});
+		} catch (Exception e) { }
+		
+		return null;
+	}
+	
+	public static <T> T stringToObject(String value, Class<T> type, String charset) throws IOException  {
+		return bytesToObject(value.getBytes(charset), type);
+	}
+	
+	public static <T> T stringToObject(String value, Class<T> type) throws IOException  {
+		return stringToObject(value, type, "UTF-8");
+	}
+	
+	public static <T> T bytesToObject(byte[] bytes, Class<T> type) throws IOException {
+		return mapper.readValue(bytes, type);
+	}
+	
+	public static <T> T fileToObject(File file, Class<T> type) throws IOException  {
+		return mapper.readValue(file, type);
+	}
+	
+	public static <T> T streamToObject(InputStream is, Class<T> type) throws IOException  {
+		return mapper.readValue(is, type);
 	}
 	
 	public static String objectToString(Object object) {
@@ -124,25 +154,15 @@ public class JSON {
 	public static void objectToStream(OutputStream os, Object object) throws IOException {
 		mapper.writeValue(os, object);
 	}
+	
+	public static String xmlToJson(String xml) {
+		XmlMapper xmlMapper = null;
 
-	public static <T> T stringToObject(String value, Class<T> type, String charset) throws IOException  {
-		return bytesToObject(value.getBytes(charset), type);
-	}
-	
-	public static <T> T stringToObject(String value, Class<T> type) throws IOException  {
-		return stringToObject(value, type, "UTF-8");
-	}
-	
-	public static <T> T bytesToObject(byte[] bytes, Class<T> type) throws IOException {
-		return mapper.readValue(bytes, type);
-	}
-	
-	public static <T> T fileToObject(File file, Class<T> type) throws IOException  {
-		return mapper.readValue(file, type);
-	}
-	
-	public static <T> T streamToObject(InputStream is, Class<T> type) throws IOException  {
-		return mapper.readValue(is, type);
+		try { 
+			(xmlMapper = new XmlMapper()).registerModule(new SimpleModule().addDeserializer(JsonNode.class, new DuplicateToArrayJsonNodeDeserializer()));
+
+			return mapper.writeValueAsString(xmlMapper.readTree(xml));
+		} catch (Throwable e) { return null; }
 	}
 	
 	public static class DuplicateToArrayJsonNodeDeserializer extends JsonNodeDeserializer {
