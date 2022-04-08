@@ -20,12 +20,9 @@ import com.eliall.util.Tool;
 public class RewriteFilter implements Filter {
 	public final static Map<String, String> MAPPING = new HashMap<String, String>();
 
-	private String extensions = null;
-
-	public void init(FilterConfig config) throws ServletException {
-		if ((extensions = config.getInitParameter("Accept-Extension")) == null) extensions = "do";
-		else extensions = extensions.replaceAll("[ ,\t]+", "|");
-	}
+	private final static String extensions = "do|jsp";
+	
+	public void init(FilterConfig config) throws ServletException { }
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws ServletException, IOException {
 		HttpServletRequestWrapper wrapper = new HttpServletRequestWrapper((HttpServletRequest)request);
