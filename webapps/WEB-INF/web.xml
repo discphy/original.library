@@ -5,7 +5,6 @@
 	<filter>
 		<filter-name>HeaderFilter</filter-name>
 		<filter-class>com.eliall.filter.HeaderFilter</filter-class>
-		<init-param><param-name>My-Custom-Header</param-name><param-value>0000-0000-0000-0000</param-value></init-param>
 	</filter>
 	<filter>
 		<filter-name>RewriteFilter</filter-name>

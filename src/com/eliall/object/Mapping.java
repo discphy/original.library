@@ -9,8 +9,8 @@ import com.eliall.util.Tool;
 public class Mapping {
 	public static String PACKAGE = null;
 
-	private static final HashMap<String, String> uris = new HashMap<String, String>(), rewrites = new HashMap<String, String>();
-	private static final ConcurrentHashMap<String, Object> classes = new ConcurrentHashMap<String, Object>(), methods = new ConcurrentHashMap<String, Object>();
+	private final static HashMap<String, String> uris = new HashMap<String, String>(), rewrites = new HashMap<String, String>();
+	private final static ConcurrentHashMap<String, Object> classes = new ConcurrentHashMap<String, Object>(), methods = new ConcurrentHashMap<String, Object>();
 
 	public static void name(String uri, String clazz) {
 		if (Tool.nvl(uri).equals("")) return;

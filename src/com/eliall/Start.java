@@ -10,6 +10,8 @@ import javax.servlet.ServletConfig;
 import com.eliall.common.Config;
 import com.eliall.common.Database;
 import com.eliall.common.EliObject;
+import com.eliall.filter.HeaderFilter;
+import com.eliall.filter.RewriteFilter;
 import com.eliall.object.Mapping;
 import com.eliall.util.JSON;
 import com.eliall.util.Tool;
@@ -37,6 +39,7 @@ public class Start {
 			Config.set("database.mode", Config.get("database.mode", ""));
 
 			setupConfig(configPath);
+			setupHeader(configPath);
 			setupMapping(configPath);
 			setupDatabase(configPath);
 
@@ -67,6 +70,9 @@ public class Start {
 				}
 			} catch (Throwable e) { System.err.println(e.toString()); }
 		}
+		
+		config.getServletContext().addFilter(HeaderFilter.class.getSimpleName(), HeaderFilter.class).addMappingForUrlPatterns(null, false, "/*");
+		config.getServletContext().addFilter(RewriteFilter.class.getSimpleName(), RewriteFilter.class).addMappingForUrlPatterns(null, false, "/*");
 	}
 
 	private static void setupConfig(String configPath) {
@@ -77,13 +83,33 @@ public class Start {
 			else throw new Exception("Setting up Service configuration failed");
 		} catch (Throwable e) { System.err.println(e.getMessage() + ": " + configFile.getAbsolutePath() + " (No such file)"); }
 	}
+	
+	private static void setupHeader(String configPath) {
+		String filePath = (configPath + File.separator + "header.json").replaceAll("[/]+", "/");
+
+		FileInputStream inputStream = null;
+		EliObject headerMap = null;
+		
+		if (!new File(filePath).exists()) return;
+		
+		try {
+			inputStream = new FileInputStream(filePath);
+			headerMap = new EliObject(JSON.streamToMap(inputStream));
+			
+			for (String key : headerMap.keySet()) HeaderFilter.put(key, headerMap.getString(key));
+		} catch (Throwable e) { System.err.println("Setting up Header configuration failed: " + e.getMessage()); } finally { Tool.release(inputStream); }
+	}
 
 	private static void setupMapping(String configPath) {
+		String filePath = (configPath + File.separator + "uris.json").replaceAll("[/]+", "/");
+
 		FileInputStream inputStream = null;
 		EliObject uriConfig = null;
+		
+		if (!new File(filePath).exists()) return;
 
 		try {
-			inputStream = new FileInputStream((configPath + File.separator + "uris.json").replaceAll("[/]+", "/"));
+			inputStream = new FileInputStream(filePath);
 			uriConfig = new EliObject(JSON.streamToMap(inputStream));
 
 			if (uriConfig.containsKey("mapping_list")) {
