@@ -11,7 +11,6 @@ import com.eliall.common.Config;
 import com.eliall.common.Database;
 import com.eliall.common.EliObject;
 import com.eliall.filter.HeaderFilter;
-import com.eliall.filter.RewriteFilter;
 import com.eliall.object.Mapping;
 import com.eliall.util.JSON;
 import com.eliall.util.Tool;
@@ -70,9 +69,6 @@ public class Start {
 				}
 			} catch (Throwable e) { System.err.println(e.toString()); }
 		}
-		
-		config.getServletContext().addFilter(HeaderFilter.class.getSimpleName(), HeaderFilter.class).addMappingForUrlPatterns(null, false, "/*");
-		config.getServletContext().addFilter(RewriteFilter.class.getSimpleName(), RewriteFilter.class).addMappingForUrlPatterns(null, false, "/*");
 	}
 
 	private static void setupConfig(String configPath) {
