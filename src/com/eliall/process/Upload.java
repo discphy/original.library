@@ -8,6 +8,7 @@ import java.util.Map;
 
 import com.eliall.common.Config;
 import com.eliall.common.EliObject;
+import com.eliall.util.Tool;
 
 @SuppressWarnings("rawtypes")
 public class Upload {
@@ -17,7 +18,7 @@ public class Upload {
 		if (parameters.get(Config.FILES_KEY) == null) return null;
 		else files = new EliObject();
 		
-		for (Object object : parameters.getList(Config.FILES_KEY)) files.put((file = new EliObject(object)).getString("name"), file); 
+		for (Object object : parameters.getList(Config.FILES_KEY)) files.put(Tool.nvl((file = new EliObject(object)).remove("name")), file); 
 
 		return files;
 	}
