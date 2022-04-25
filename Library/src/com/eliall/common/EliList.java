@@ -11,16 +11,21 @@ import com.eliall.util.JSON;
 @SuppressWarnings({"rawtypes","unchecked"})
 public class EliList extends ArrayList<Object> {
 	public EliList() { super(); }
+	
+	public static EliList object(Object object) { return object != null ? instance(object) : null; }
+	public static EliList instance(Object object) { return object != null && object instanceof EliList ? (EliList)object : new EliList(object, true); }
 
-	public EliList(Object object) {
+	public EliList(Object object, boolean collection) {
 		this();
 		
 		if (object == null) return;
 
 		if (object instanceof Collection) super.addAll((Collection)object);
 		else if (object instanceof String && ((String)object).trim().startsWith("[") && ((String)object).trim().endsWith("]")) super.addAll(JSON.stringToList((String)object));
-		else add(object);
+		else if (!collection) add(object);
 	}
+	
+	public EliList(Object object) { this(object, false); }
 
 	public void clean() {
 		for (Object value : this.toArray()) if (value == null || (value instanceof String && value.equals("null"))) remove(value);
