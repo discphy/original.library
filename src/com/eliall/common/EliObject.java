@@ -153,7 +153,7 @@ public class EliObject extends HashMap<String, Object> {
 	public EliList getList(String key, boolean nullable) {
 		Object object = null;
 		
-		if ((object = get(key)) != null) return object instanceof EliList ? (EliList)object : new EliList(object);
+		if ((object = get(key)) != null) return object instanceof EliList ? (EliList)object : new EliList(object, true);
 
 		return nullable ? null : new EliList();
 	}
