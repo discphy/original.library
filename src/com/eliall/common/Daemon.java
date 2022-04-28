@@ -81,7 +81,7 @@ public class Daemon extends Thread {
 
 			Worker.execute(new Runnable() { public void run() {
 				try { method.invoke(invoker); }
-				catch (Throwable e) { Logger.error(e.getMessage(), e); }
+				catch (Throwable e) { exception(e); }
 				finally { runnings.remove(method.getName()); }
 			} });
 		}
