@@ -114,6 +114,11 @@ public class EliObject extends HashMap<String, Object> {
 	public EliObject delete(String ... keys) {
 		for (String part : keys) for (String key : part.split("[ ,\t\r\n/]+")) remove(key); return this;
 	}
+	
+	public BigDecimal plus(Object object1, Object object2) { return getDecimal(object1, object2, "plus"); }
+	public BigDecimal minus(Object object1, Object object2) { return getDecimal(object1, object2, "minus"); }
+	public BigDecimal devide(Object object1, Object object2) { return getDecimal(object1, object2, "devide"); }
+	public BigDecimal multiply(Object object1, Object object2) { return getDecimal(object1, object2, "multiply"); }
 
 	public Map toMap() {
 		return new HashMap<String, Object>(this);
@@ -297,5 +302,22 @@ public class EliObject extends HashMap<String, Object> {
 		} catch (Throwable e) { number = def; }
 		
 		return number;
+	}
+	
+	public BigDecimal getDecimal(Object object1, Object object2, String process) {
+		BigDecimal decimal1 = null, decimal2 = null;
+		
+		if (object1 instanceof BigDecimal) decimal1 = (BigDecimal)object1;
+		else object1 = getDecimal(String.valueOf(object1), String.valueOf(object1));
+		
+		if (object2 instanceof BigDecimal) decimal2 = (BigDecimal)object2;
+		else object2 = getDecimal(String.valueOf(object2), String.valueOf(object2));
+		
+		if (process.equals("plus")) return decimal1.add(decimal2);
+		if (process.equals("minus")) return decimal1.subtract(decimal2);
+		if (process.equals("multiply")) return decimal1.multiply(decimal2);
+		if (process.equals("devide")) return decimal1.divide(decimal2);
+		
+		return decimal1;
 	}
 }
