@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.eliall.definition.Regexes;
 import com.eliall.util.Tool;
 
 public class Format {
@@ -35,6 +36,18 @@ public class Format {
 	
 	public static String time(long time, boolean seconds) {
 		return (seconds ? GMT_FORMAT1 : GMT_FORMAT2).format(new Date(time));
+	}
+	
+	public static String phone(String phone) {
+		return phone(phone, false);
+	}
+	
+	public static String phone(String phone, boolean numbers) {
+		return phone != null ? phone(phone, numbers ? "" : "-") : null;
+	}
+	
+	public static String phone(String phone, String seperator) {
+		return phone.replaceFirst(Regexes.PHONE_NO, "$1" + seperator + "$2" + seperator + "$3");
 	}
 
 	public static String quantity(BigDecimal decimal) {
