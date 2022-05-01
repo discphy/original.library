@@ -38,8 +38,6 @@ import okhttp3.Response;
 
 @SuppressWarnings({"rawtypes","unchecked"})
 public class Tool {
-	public final static String PHONE_NO = "([0-9]{2,3})-?([0-9]{3,4})-?([0-9]{4})";
-
 	private final static Pattern VALUE_PATTERN = Pattern.compile(".*@\\{([^@{}]+)\\}.*");
 
 	private final static char[][] START_LETTERS = { { 'ㄱ' }, { 'ㄱ', 'ㄱ' }, { 'ㄴ' }, { 'ㄷ' }, { 'ㄷ', 'ㄷ' }, { 'ㄹ' }, { 'ㅁ' }, { 'ㅂ' }, { 'ㅂ', 'ㅂ' }, { 'ㅅ' }, { 'ㅅ', 'ㅅ' }, { 'ㅇ' }, { 'ㅈ' }, { 'ㅈ', 'ㅈ' }, { 'ㅊ' }, { 'ㅋ' }, { 'ㅌ' }, { 'ㅍ' }, { 'ㅎ' } };
@@ -187,14 +185,6 @@ public class Tool {
 		if (date == null) return "";
 
 		return dateFormat(date.getTime(), dateForm);
-	}
-
-	public static String phoneFormat(String phoneNo, String seperator) {
-		return phoneNo.replaceFirst(PHONE_NO, "$1" + seperator + "$2" + seperator + "$3");
-	}
-
-	public static String phoneFormat(String phone) {
-		return phoneFormat(phone, "-");
 	}
 
 	public static String numberFormat(long number, String format) {
