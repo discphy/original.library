@@ -120,10 +120,9 @@ public class Worker implements Callback {
 		if (request == null || request.body() == null) return null;
 		
 		RequestBody body = request.body();
-		Buffer buffer = new Buffer();
 		String string = null;
 		
-		try { body.writeTo(buffer); string = buffer.readUtf8(); } catch (Throwable e) { } finally { buffer.close(); }
+		try (Buffer buffer = new Buffer()) { body.writeTo(buffer); string = buffer.readUtf8(); } catch (Throwable e) { }
 
 		return string;
 	}
