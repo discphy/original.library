@@ -171,10 +171,6 @@ public class Tool {
 
 		return null;
 	}
-	
-	public static String cleanPath(String path) {
-		return path != null ? path.replaceAll("[" + File.separator + "]+", File.separator) : path;
-	}
 
 	public static String dateFormat(Date date, String dateForm) {
 		if (date == null) return "";

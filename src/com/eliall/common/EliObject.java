@@ -1,5 +1,7 @@
 package com.eliall.common;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -14,7 +16,7 @@ import java.util.Set;
 import com.eliall.util.JSON;
 
 @SuppressWarnings({"rawtypes","unchecked"})
-public class EliObject extends HashMap<String, Object> {
+public class EliObject extends HashMap<String, Object> implements Closeable {
 	public static String toString(Object object) { return JSON.objectToString(object, false); }
 	public static String toString(Object object, boolean pretty) { return JSON.objectToString(object, pretty); }
 	
@@ -88,6 +90,9 @@ public class EliObject extends HashMap<String, Object> {
 
 		return this;
 	}
+	
+	@Override
+	public void close() throws IOException { clear(); }
 
 	public EliObject putAll(Map object, boolean overwrite) {
 		if (object != null)  {

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.lang.reflect.Field;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -94,14 +95,14 @@ public class Config {
 	
 	public static String tempPath() { return tempPath(""); }
 	public static String tempPath(String ... prefix) {
-		return Tool.cleanPath(tempPath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + File.separator + datenPath());
+		return Paths.get(tempPath, prefix != null ? Tool.join(prefix, File.separator) : "", datenPath()).toString();
 	}
 	
 	public static String storagePath() { return storagePath(true, ""); }
 	public static String storagePath(boolean daten) { return storagePath(daten, ""); }
 	public static String storagePath(String ... prefix) { return storagePath(true, prefix); }
 	public static String storagePath(boolean daten, String ... prefix) {
-		return Tool.cleanPath(storagePath + (prefix != null ? File.separator + Tool.join(prefix, File.separator) : "") + (daten ? File.separator + datenPath() : ""));
+		return Paths.get(storagePath, prefix != null ? Tool.join(prefix, File.separator) : "", daten ? datenPath() : "").toString();
 	}
 	
 	public static String storagePrefix() {
