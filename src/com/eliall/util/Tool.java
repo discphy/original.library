@@ -443,8 +443,7 @@ public class Tool {
 	}
 
 	public static void touch(File file) throws FileNotFoundException, IOException {
-		new FileOutputStream(file).close();
-		file.setLastModified(System.currentTimeMillis());
+		try (FileOutputStream stream = new FileOutputStream(file)) { } finally { file.setLastModified(System.currentTimeMillis()); }
 	}
 	
 	public static void readStream(InputStream input, OutputStream output) throws IOException {
