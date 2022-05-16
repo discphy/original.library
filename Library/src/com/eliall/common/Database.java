@@ -43,18 +43,6 @@ public class Database implements DB {
 			}
 		} catch (Throwable e) { e.printStackTrace(System.err); }
 	}
-	
-	public static SqlSession main() {
-		return session(MAIN);
-	}
-	
-	public static SqlSession slave() {
-		return session(SLAVE);
-	}
-	
-	public static SqlSession extra() {
-		return session(EXTRA);
-	}
 
 	public static SqlSession session(String id) {
 		return factories.get(id).openSession(false);
