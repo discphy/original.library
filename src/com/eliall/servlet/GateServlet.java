@@ -28,7 +28,7 @@ import com.eliall.util.Tool;
 @MultipartConfig(fileSizeThreshold=1024*1024*16, maxFileSize=1024*1024*32, maxRequestSize=1024*1024*64)
 public class GateServlet extends HttpServlet {
 	private static final Class[] methodParams = { HttpServletRequest.class, HttpServletResponse.class, EliObject.class }, viewParams = { HttpServletRequest.class, HttpServletResponse.class };
-	private static final String templateRegex = "/(.+)\\." + Config.EXTENSION + "$";
+	private static final String templateRegex = "/(.+)\\." + Config.EXTENSION + "$", methodKey = "method&";
 
 	@Override
 	public void init() throws ServletException { super.init(); }
@@ -53,8 +53,8 @@ public class GateServlet extends HttpServlet {
 		request.setAttribute("page", URLEncoder.encode(request.getRequestURI() + (!Tool.nvl(request.getQueryString()).equals("") ? "?" + request.getQueryString() : ""), Config.CHARSET));
 
 		try {
-			String names[] = ((String)request.getAttribute(Config.METHOD_KEY)).split("[_]+"), template = null, key = null;
-			StringBuilder methodName = new StringBuilder(); request.removeAttribute(Config.METHOD_KEY);
+			String names[] = ((String)request.getAttribute(methodKey)).split("[_]+"), template = null, key = null;
+			StringBuilder methodName = new StringBuilder(); request.removeAttribute(methodKey);
 			
 			Method method = null;
 			List files = null;
@@ -94,7 +94,7 @@ public class GateServlet extends HttpServlet {
 								}
 
 								if (mthd != null) {
-									mthd.setAccessible(true); request.setAttribute(Config.METHOD_KEY, method);
+									mthd.setAccessible(true); request.setAttribute(methodKey, method);
 									mthd.invoke(controller, new Object[] { request, response });
 								}
 							}
@@ -145,7 +145,7 @@ public class GateServlet extends HttpServlet {
 		Object instance = null;
 		
 		if (uris == null || uris.length <= 0) return null;
-		else request.setAttribute(Config.METHOD_KEY, uris[uris.length - 1]);
+		else request.setAttribute(methodKey, uris[uris.length - 1]);
 		
 		if ((instance = Mapping.clazz(uri)) != null) return instance;
 
