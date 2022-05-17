@@ -428,14 +428,14 @@ public class Tool {
 			if (object == null) continue;
 
 			try {
-				if (object instanceof Closeable) { ((Closeable)object).close(); return; }
-				if (object instanceof AutoCloseable) { ((AutoCloseable)object).close(); return; }
+				if (object instanceof Closeable) { ((Closeable)object).close(); continue; }
+				if (object instanceof AutoCloseable) { ((AutoCloseable)object).close(); continue; }
 	
-				if (object instanceof Map) { ((Map)object).clear(); return; }
-				if (object instanceof ByteBuffer) { ((ByteBuffer)object).clear(); return; }
+				if (object instanceof Map) { ((Map)object).clear(); continue; }
+				if (object instanceof ByteBuffer) { ((ByteBuffer)object).clear(); continue; }
 	
-				if (object instanceof Process) { ((Process)object).destroy(); return; }
-				if (object instanceof HttpURLConnection) { ((HttpURLConnection)object).disconnect(); return; }
+				if (object instanceof Process) { ((Process)object).destroy(); continue; }
+				if (object instanceof HttpURLConnection) { ((HttpURLConnection)object).disconnect(); continue; }
 				
 				if (object.getClass().getMethod("close") != null) object.getClass().getMethod("close").invoke(object);
 			} catch (Exception e) {}
