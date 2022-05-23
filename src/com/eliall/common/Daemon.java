@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -17,11 +18,11 @@ import com.eliall.process.Worker;
 public class Daemon extends Thread {
 	protected final static String uuid = UUID.nameUUIDFromBytes((Config.serverName() + System.currentTimeMillis()).getBytes()).toString();
 
-	protected AtomicBoolean runnable = new AtomicBoolean(true), paused = new AtomicBoolean(false), stopped = new AtomicBoolean(false);
-	protected ConcurrentHashMap<String, Long> runnings = new ConcurrentHashMap<String, Long>();
+	protected ConcurrentHashMap<String, Duration> intervals = new ConcurrentHashMap<String, Duration>(), runnings = new ConcurrentHashMap<String, Duration>();
 	protected List<Method> processes = new ArrayList<Method>();
 
-	protected volatile long sleepTime = 1000, maxSleepTime = 3000, minSleepTime = 10, runInterval = sleepTime;
+	protected AtomicBoolean runnable = new AtomicBoolean(true), paused = new AtomicBoolean(false), stopped = new AtomicBoolean(false);
+	protected volatile long sleepTime = 1000, maxSleepTime = 3000, minSleepTime = 10;
 	
 	public Daemon(String name) {
 		super(name); setDaemon(true);
@@ -30,7 +31,11 @@ public class Daemon extends Thread {
 			Method[] methods = getClass().getDeclaredMethods();
 	
 			for (Method method : methods) {
-				if (method.getAnnotation(Process.class) == null) continue;
+				Process annotation = method.getAnnotation(Process.class);
+				long interval = 0;
+
+				if (annotation == null) continue;
+				else if ((interval = annotation.interval()) > 0) intervals.put(method.getName(), Duration.ofMillis(interval));
 				
 				method.setAccessible(true);
 				processes.add(method);
@@ -72,12 +77,17 @@ public class Daemon extends Thread {
 	protected void prepare() { }
 	protected void process() {
 		Object invoker = this;
+		Duration now = Duration.ofMillis(System.currentTimeMillis());
 
 		for (Method method : processes) {
-			if (runnings.get(method.getName()) != null) {
-				if (System.currentTimeMillis() - runnings.get(method.getName()).longValue() < runInterval) continue;
+			Duration interval = intervals.get(method.getName()), running = runnings.get(method.getName());
+			
+			if (interval == null) interval = Duration.ofMillis(sleepTime);
+			
+			if (running != null) {
+				if (now.minus(running).compareTo(interval) < 0) continue;
 				else runnings.remove(method.getName());
-			} else runnings.put(method.getName(), Long.valueOf(System.currentTimeMillis()));
+			} else runnings.put(method.getName(), Duration.ofMillis(System.currentTimeMillis()));
 
 			Worker.execute(new Runnable() { public void run() {
 				try { method.invoke(invoker); }
@@ -102,5 +112,5 @@ public class Daemon extends Thread {
 	
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
-	protected @interface Process { }
+	protected @interface Process { long interval() default 0; }
 }
