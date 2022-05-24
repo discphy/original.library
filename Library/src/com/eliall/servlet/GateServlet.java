@@ -105,6 +105,7 @@ public class GateServlet extends HttpServlet {
 					method.invoke(controller, new Object[] { request, response, parameters });
 				}
 				
+				if (request.getAttribute(Config.ERROR_KEY) != null) throw (Throwable)request.getAttribute(Config.ERROR_KEY);
 				if (request.getAttribute(Config.TEMPLATE_KEY) != null) template = Tool.nvl(request.getAttribute(Config.TEMPLATE_KEY));
 				
 				if (template != null && template.length() > 3) getServletContext().getRequestDispatcher(template).forward(request, response);
@@ -117,13 +118,11 @@ public class GateServlet extends HttpServlet {
 					else getServletContext().getRequestDispatcher(uri).forward(request, response);
 				} else if (!(e instanceof IllegalStateException)) throw e;
 			} finally {
-				if ((files = parameters.getList(Config.FILES_KEY)) != null) {
-					for (Object object : files) {
-						EliObject info = new EliObject(object);
-						File file = new File(info.getString("path", ""));
-						
-						if (file.exists()) file.delete();
-					}
+				if ((files = parameters.getList(Config.FILES_KEY)) != null) for (Object object : files) {
+					EliObject info = new EliObject(object);
+					File file = new File(info.getString("path", ""));
+					
+					if (file.exists()) file.delete();
 				}
 			}
 		} catch (Throwable e) {

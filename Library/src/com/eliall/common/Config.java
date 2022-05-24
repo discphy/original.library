@@ -22,9 +22,9 @@ import com.eliall.util.Tool;
 
 @SuppressWarnings("rawtypes")
 public class Config {
-	public final static String PARAM_KEY = "param&", TEMPLATE_KEY = "template&", FILES_KEY = "files&", TOKEN_KEY = "token&", TOKEN_SUFFIX = "tk", DATABASE_KEY = "database&", DEVICE_KEY = "dvky";
+	public final static String PARAM_KEY = "param&", ERROR_KEY = "error&", TEMPLATE_KEY = "template&", FILES_KEY = "files&", TOKEN_KEY = "token&", TOKEN_SUFFIX = "tk", DATABASE_KEY = "database&", DEVICE_KEY = "dvky";
 	public final static String XHR_HEADER_KEY = "Origin-Headers", REFER_URI_KEY = "Referer-URI", APP_AGENT_KEY = "App-Agent", CORE_SERVER_KEY = "Core-Server", SERVER_NAME_KEY = "Server-Name";
-	public final static String SITE_CODE_KEY = "Site-Code", AUTH_TOKEN_KEY = "Auth-Token", USER_TOKEN_KEY = "User-Token", USER_IP_KEY = "User-IP";
+	public final static String SITE_CODE_KEY = "Site-Code", AUTH_TOKEN_KEY = "Auth-Token", ADMIN_TOKEN_KEY = "Admin-Token", USER_TOKEN_KEY = "User-Token", USER_IP_KEY = "User-IP";
 	public final static int MAX_THREADS = Runtime.getRuntime().availableProcessors();
 
 	protected static final String serverName = Tool.hostName() + "/" + Tool.networkAddress();
