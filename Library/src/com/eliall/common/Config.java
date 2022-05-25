@@ -25,7 +25,6 @@ public class Config {
 	public final static String PARAM_KEY = "param&", ERROR_KEY = "error&", TEMPLATE_KEY = "template&", FILES_KEY = "files&", TOKEN_KEY = "token&", TOKEN_SUFFIX = "tk", DATABASE_KEY = "database&", DEVICE_KEY = "dvky";
 	public final static String XHR_HEADER_KEY = "Origin-Headers", REFER_URI_KEY = "Referer-URI", APP_AGENT_KEY = "App-Agent", CORE_SERVER_KEY = "Core-Server", SERVER_NAME_KEY = "Server-Name";
 	public final static String SITE_CODE_KEY = "Site-Code", AUTH_TOKEN_KEY = "Auth-Token", ADMIN_TOKEN_KEY = "Admin-Token", USER_TOKEN_KEY = "User-Token", USER_IP_KEY = "User-IP";
-	public final static int MAX_THREADS = Runtime.getRuntime().availableProcessors();
 
 	protected static final String serverName = Tool.hostName() + "/" + Tool.networkAddress();
 	protected static final Pattern varKeyPettern = Pattern.compile(".*\\$\\{([^${}]+)\\}.*");
@@ -34,6 +33,8 @@ public class Config {
 	
 	public static String SEC_KEY = new String(new char[] { 101,108,102,105,110,49,48 }), SEC_PASS = new String(new char[] { 101,108,105,97,108,108 });
 	public static String CHARSET = "UTF-8", EXTENSION = "do";
+
+	public static int MAX_THREADS = Runtime.getRuntime().availableProcessors();
 	
 	protected static String tempPath = Tool.nvl(System.getProperty("java.io.tmpdir"), "/tmp"), storagePath = null;
 	protected static Class configClass = new Object(){}.getClass().getEnclosingClass();

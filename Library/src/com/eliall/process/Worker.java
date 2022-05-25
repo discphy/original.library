@@ -59,11 +59,8 @@ public class Worker implements Callback {
 
 				threadCount.incrementAndGet();
 				localClient.newCall(new Request.Builder().addHeader("Next-Process", Tool.nvl(processes)).url(Config.url(process)).post(jsonBody(result.toString())).build()).enqueue(this);
-			} else onFailure(call, new IOException("{ \"response_code\": " + response.code() + ", \"response_message\": \"" + response.message() + "\", \"thread_count\": " + threadCount.getAndIncrement() + " }"));
-		} finally {
-			Tool.release(response);
-			Worker.decrease(process);
-		}
+			} else onFailure(call, new IOException("{ \"response_code\": " + response.code() + ", \"response_message\": \"" + response.message() + "\", \"thread_count\": " + threadCount.get() + " }"));
+		} finally { Tool.release(response); Worker.decrease(process); }
 	}
 
 	public void onFailure(Call call, IOException exception) {
@@ -81,9 +78,7 @@ public class Worker implements Callback {
 
 			threadCount.incrementAndGet();
 			localClient.newCall(new Request.Builder().url(Config.url(processes[0])).post(jsonBody(errorObject.toString())).build()).enqueue(this);
-		} finally {
-			threadCount.decrementAndGet();
-		}
+		} finally { threadCount.decrementAndGet(); }
 	}
 
 	public static void clean() {
@@ -108,13 +103,8 @@ public class Worker implements Callback {
 		return threadCount.get() < Config.MAX_THREADS;
 	}
 
-	public static int increase(String name) {
-		try { return threadCount.incrementAndGet(); } finally { }
-	}
-
-	public static int decrease(String name) {
-		try { return threadCount.decrementAndGet(); } finally { }
-	}
+	public static int increase(String name) { return threadCount.incrementAndGet(); }
+	public static int decrease(String name) { return threadCount.decrementAndGet(); }
 
 	public static String requestBody(Request request) {
 		if (request == null || request.body() == null) return null;
