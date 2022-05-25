@@ -27,7 +27,7 @@ public class Worker implements Callback {
 	public final static OkHttpClient localClient = getHttpBuilder(3, 5, 10).build(), remoteClient = getHttpBuilder(5, 30, 10).build();
 	public final static ExecutorService taskExecutor = Executors.newWorkStealingPool();
 
-	private final static AtomicInteger threadCount = new AtomicInteger();
+	protected final static AtomicInteger threadCount = new AtomicInteger();
 
 	static {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -103,8 +103,8 @@ public class Worker implements Callback {
 		return threadCount.get() < Config.MAX_THREADS;
 	}
 
-	public static int increase(String name) { return threadCount.incrementAndGet(); }
-	public static int decrease(String name) { return threadCount.decrementAndGet(); }
+	public static int increase(Object object) { return threadCount.incrementAndGet(); }
+	public static int decrease(Object object) { return threadCount.decrementAndGet(); }
 
 	public static String requestBody(Request request) {
 		if (request == null || request.body() == null) return null;
